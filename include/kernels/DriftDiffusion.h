@@ -13,30 +13,26 @@ InputParameters validParams<DriftDiffusion>();
 class DriftDiffusion : public Kernel
 {
 public:
-  DriftDiffusion(const InputParameters & parameters);
-  virtual ~DriftDiffusion();
+	DriftDiffusion(const InputParameters & parameters);
+	virtual ~DriftDiffusion();
 
 protected:
 
-  virtual Real computeQpResidual();
-  virtual Real computeQpJacobian();
-  virtual Real computeQpOffDiagJacobian(unsigned int jvar);
+	virtual Real computeQpResidual();
+	virtual Real computeQpJacobian();
+	virtual Real computeQpOffDiagJacobian(unsigned int jvar);
 
-  Real _r_units;
+	Real _r_units;
 
-  const MaterialProperty<Real> & _mu;
-  const MaterialProperty<Real> & _sign;
-  MaterialProperty<Real> _user_mu;
-  MaterialProperty<Real> _user_sign;
+	const MaterialProperty<Real> & _mu;
+	const MaterialProperty<Real> & _sign;
 
-  const MaterialProperty<Real> & _diffusivity;
-  MaterialProperty<Real> _user_diff;
+	const MaterialProperty<Real> & _diffusivity;
 
-  unsigned int _potential_id;
-  const VariableGradient & _grad_potential;
-  VariableGradient _minus_e_field;
+	unsigned int _potential_id;
+	const VariableGradient & _grad_potential;
 
-  Real _d_diffusivity_d_u;
+	Real _d_diffusivity_d_u;
 };
 
 
