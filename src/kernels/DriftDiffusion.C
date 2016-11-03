@@ -32,8 +32,7 @@ DriftDiffusion::DriftDiffusion(const InputParameters & parameters) :
   if (!(isCoupled("potential") || parameters.isParamSetByUser("EField")))
     mooseError("You must either couple in a potential variable or set an EField.");
 
-  if (!(isCoupled("potential")))
-    _minus_e_field.resize(_fe_problem.getMaxQps(), RealGradient(-getParam<Real>("EField")));
+  _minus_e_field.resize(_fe_problem.getMaxQps(), RealGradient(-getParam<Real>("EField")));
   _user_diff.set().resize(_fe_problem.getMaxQps(), Real(getParam<Real>("diff")));
   _user_mu.set().resize(_fe_problem.getMaxQps(), Real(getParam<Real>("mu")));
   _user_sign.set().resize(_fe_problem.getMaxQps(), Real(getParam<Real>("sign")));
