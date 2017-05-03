@@ -3,59 +3,57 @@
 
 #include "ShapeSideUserObject.h"
 
-//Forward Declarations
+// Forward Declarations
 class CurrentDensityShapeSideUserObject;
 
-template<>
+template <>
 InputParameters validParams<CurrentDensityShapeSideUserObject>();
 
-class CurrentDensityShapeSideUserObject :
-	public ShapeSideUserObject
+class CurrentDensityShapeSideUserObject : public ShapeSideUserObject
 {
 public:
-	CurrentDensityShapeSideUserObject(const InputParameters & parameters);
+  CurrentDensityShapeSideUserObject(const InputParameters & parameters);
 
-	virtual ~CurrentDensityShapeSideUserObject() {}
+  virtual ~CurrentDensityShapeSideUserObject() {}
 
-	virtual void initialize();
-	virtual void execute();
-	virtual void executeJacobian(unsigned int jvar);
-	virtual void finalize();
-	virtual void threadJoin(const UserObject & y);
+  virtual void initialize();
+  virtual void execute();
+  virtual void executeJacobian(unsigned int jvar);
+  virtual void finalize();
+  virtual void threadJoin(const UserObject & y);
 
-	///@{ custom UserObject interface functions
-	const Real & getIntegral() const { return _integral; }
-	const std::vector<Real> & getJacobian() const { return _jacobian_storage; }
-	///@}
+  ///@{ custom UserObject interface functions
+  const Real & getIntegral() const { return _integral; }
+  const std::vector<Real> & getJacobian() const { return _jacobian_storage; }
+  ///@}
 
 protected:
-	Real _integral;
-	std::vector<Real> _jacobian_storage;
+  Real _integral;
+  std::vector<Real> _jacobian_storage;
 
-	const VariableValue & _em;
-	unsigned int _em_id;
-	const VariableGradient & _grad_em;
-	const MooseVariable & _ip_var;
-	const VariableValue & _ip;
-	unsigned int _ip_id;
-	const VariableGradient & _grad_ip;
-	const VariableGradient & _grad_potential;
-	unsigned int _potential_id;
-	const VariableValue & _mean_en;
-	unsigned int _mean_en_id;
-	const MaterialProperty<Real> & _muip;
-	const MaterialProperty<Real> & _diffip;
-	const MaterialProperty<Real> & _muem;
-	const MaterialProperty<Real> & _d_muem_d_actual_mean_en;
-	const MaterialProperty<Real> & _diffem;
-	const MaterialProperty<Real> & _d_diffem_d_actual_mean_en;
-	const MaterialProperty<Real> & _e;
-	bool _use_moles;
-	const MaterialProperty<Real> & _N_A;
+  const VariableValue & _em;
+  unsigned int _em_id;
+  const VariableGradient & _grad_em;
+  const MooseVariable & _ip_var;
+  const VariableValue & _ip;
+  unsigned int _ip_id;
+  const VariableGradient & _grad_ip;
+  const VariableGradient & _grad_potential;
+  unsigned int _potential_id;
+  const VariableValue & _mean_en;
+  unsigned int _mean_en_id;
+  const MaterialProperty<Real> & _muip;
+  const MaterialProperty<Real> & _diffip;
+  const MaterialProperty<Real> & _muem;
+  const MaterialProperty<Real> & _d_muem_d_actual_mean_en;
+  const MaterialProperty<Real> & _diffem;
+  const MaterialProperty<Real> & _d_diffem_d_actual_mean_en;
+  const MaterialProperty<Real> & _e;
+  bool _use_moles;
+  const MaterialProperty<Real> & _N_A;
 
-	Real _r_units;
-	Real _t_units;
-	
+  Real _r_units;
+  Real _t_units;
 };
 
 #endif

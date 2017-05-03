@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef FACEFACECONSTRAINT_H
 #define FACEFACECONSTRAINT_H
@@ -18,11 +5,11 @@
 #include "Constraint.h"
 #include "CoupleableMooseVariableDependencyIntermediateInterface.h"
 
-//Forward Declarations
+// Forward Declarations
 class FaceFaceConstraint;
 class FEProblem;
 
-template<>
+template <>
 InputParameters validParams<FaceFaceConstraint>();
 
 /**
@@ -40,9 +27,8 @@ InputParameters validParams<FaceFaceConstraint>();
  *         +--------------+-------------+-------------+
  *
  */
-class FaceFaceConstraint :
-  public Constraint,
-  public CoupleableMooseVariableDependencyIntermediateInterface
+class FaceFaceConstraint : public Constraint,
+                           public CoupleableMooseVariableDependencyIntermediateInterface
 {
 public:
   FaceFaceConstraint(const InputParameters & parameters);
@@ -88,8 +74,8 @@ protected:
   /// Boundary ID for the master surface
   BoundaryID _master;
 
-  const MooseArray< Point > & _q_point;
-  QBase * & _qrule;
+  const MooseArray<Point> & _q_point;
+  QBase *& _qrule;
   const MooseArray<Real> & _JxW;
   const MooseArray<Real> & _coord;
 
@@ -98,10 +84,10 @@ protected:
   /**
    * Current element on the interface (i.e in the mortar space)
    */
-  const Elem * & _current_elem;
+  const Elem *& _current_elem;
 
-  std::vector<std::vector<Real> > _test;
-  std::vector<std::vector<Real> > _phi;
+  std::vector<std::vector<Real>> _test;
+  std::vector<std::vector<Real>> _phi;
 
   MooseVariable & _master_var;
   MooseVariable & _slave_var;
@@ -161,6 +147,5 @@ protected:
    */
   const VariablePhiValue & _phi_slave;
 };
-
 
 #endif /* FACEFACECONSTRAINT_H_ */

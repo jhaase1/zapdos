@@ -1,26 +1,13 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef INTERFACELOGDIFFUSIONELECTRONS_H
 #define INTERFACELOGDIFFUSIONELECTRONS_H
 
 #include "InterfaceKernel.h"
 
-//Forward Declarations
+// Forward Declarations
 class InterfaceLogDiffusionElectrons;
 
-template<>
+template <>
 InputParameters validParams<InterfaceLogDiffusionElectrons>();
 
 /**
@@ -47,7 +34,6 @@ protected:
   unsigned int _mean_en_neighbor_id;
 
   Real _actual_mean_en;
-
 };
 
 #endif

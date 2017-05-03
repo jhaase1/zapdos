@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef ANALYTICALDIFFINDICATOR_H
 #define ANALYTICALDIFFINDICATOR_H
@@ -19,11 +6,10 @@
 
 class AnalyticalDiffIndicator;
 
-template<>
+template <>
 InputParameters validParams<AnalyticalDiffIndicator>();
 
-class AnalyticalDiffIndicator :
-  public ElementIntegralIndicator
+class AnalyticalDiffIndicator : public ElementIntegralIndicator
 {
 public:
   AnalyticalDiffIndicator(const InputParameters & parameters);

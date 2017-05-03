@@ -1,21 +1,9 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #include "MatchedValueLogBC.h"
 
-template<>
-InputParameters validParams<MatchedValueLogBC>()
+template <>
+InputParameters
+validParams<MatchedValueLogBC>()
 {
   InputParameters params = validParams<NodalBC>();
   params.addRequiredParam<Real>("H", "The ratio of liquid phase density to gas phase density");
@@ -23,11 +11,8 @@ InputParameters validParams<MatchedValueLogBC>()
   return params;
 }
 
-MatchedValueLogBC::MatchedValueLogBC(const InputParameters & parameters) :
-    NodalBC(parameters),
-    _v(coupledValue("v")),
-    _v_num(coupled("v")),
-    _H(getParam<Real>("H"))
+MatchedValueLogBC::MatchedValueLogBC(const InputParameters & parameters)
+  : NodalBC(parameters), _v(coupledValue("v")), _v_num(coupled("v")), _H(getParam<Real>("H"))
 {
 }
 

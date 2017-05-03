@@ -5,25 +5,23 @@
 
 class SetRHS;
 
-template<>
+template <>
 InputParameters validParams<SetRHS>();
 
 class SetRHS : public Kernel
 {
- public:
+public:
   SetRHS(const InputParameters & parameters);
   virtual ~SetRHS();
 
- protected:
-
+protected:
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
 
   // coupled vars
 
-	Real _value;
-
+  Real _value;
 };
 
 #endif /* SETSRH_H */

@@ -3,10 +3,10 @@
 
 #include "InterfaceKernel.h"
 
-//Forward Declarations
+// Forward Declarations
 class DGTotFluxContPotDriven;
 
-template<>
+template <>
 InputParameters validParams<DGTotFluxContPotDriven>();
 
 /**

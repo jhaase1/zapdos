@@ -1,32 +1,19 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #include "WDAtomicDensity.h"
 
-template<>
-InputParameters validParams<WDAtomicDensity>()
+template <>
+InputParameters
+validParams<WDAtomicDensity>()
 {
   InputParameters params = validParams<AuxKernel>();
-  
-  
+
   params.addRequiredCoupledVar("potential", "The potential");
 
   return params;
 }
 
-WDAtomicDensity::WDAtomicDensity(const InputParameters & parameters) :
-    AuxKernel(parameters),
+WDAtomicDensity::WDAtomicDensity(const InputParameters & parameters)
+  : AuxKernel(parameters),
 
     // Get the gradient of the variable
     _grad_potential(coupledGradient("potential"))

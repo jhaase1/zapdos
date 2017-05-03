@@ -1,26 +1,13 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef EFIELD_H
 #define EFIELD_H
 
 #include "AuxKernel.h"
 
-//Forward Declarations
+// Forward Declarations
 class Efield;
 
-template<>
+template <>
 InputParameters validParams<Efield>();
 
 /**
@@ -50,4 +37,4 @@ protected:
   Real _voltage_scaling;
 };
 
-#endif //EFIELD_H
+#endif // EFIELD_H

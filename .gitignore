@@ -188,4 +188,7 @@ GTAGS
 *.txt
 problems/Pictures
 
+.ipynb_checkpoints
+
+.failed_tests
 .jitcache/

@@ -5,25 +5,23 @@
 
 class SetValue;
 
-template<>
+template <>
 InputParameters validParams<SetValue>();
 
 class SetValue : public Kernel
 {
- public:
+public:
   SetValue(const InputParameters & parameters);
   virtual ~SetValue();
 
- protected:
-
+protected:
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
 
   // coupled vars
 
-	Real _value;
-
+  Real _value;
 };
 
 #endif /* SETVALUE_H */

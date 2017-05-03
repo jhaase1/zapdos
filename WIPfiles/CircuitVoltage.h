@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef CIRCUITVOLTAGE_H
 #define CIRCUITVOLTAGE_H
@@ -18,11 +5,11 @@
 #include "NodalBC.h"
 #include "ProvideMobility.h"
 
-//Forward Declarations
+// Forward Declarations
 class CircuitVoltage;
 class Function;
 
-template<>
+template <>
 InputParameters validParams<CircuitVoltage>();
 
 /**
@@ -53,4 +40,4 @@ protected:
   const ProvideMobility & _data;
 };
 
-#endif //CIRCUITVOLTAGE_H
+#endif // CIRCUITVOLTAGE_H

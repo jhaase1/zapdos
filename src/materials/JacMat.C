@@ -1,20 +1,8 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 #include "JacMat.h"
 
-template<>
-InputParameters validParams<JacMat>()
+template <>
+InputParameters
+validParams<JacMat>()
 {
   InputParameters params = validParams<Material>();
   params.addCoupledVar("v", "A variable for interpolation tests.");
@@ -24,9 +12,8 @@ InputParameters validParams<JacMat>()
   return params;
 }
 
-
-JacMat::JacMat(const InputParameters & parameters) :
-    Material(parameters),
+JacMat::JacMat(const InputParameters & parameters)
+  : Material(parameters),
     _muu(declareProperty<Real>("muu")),
     _muv(declareProperty<Real>("muv")),
     _sgnu(declareProperty<Real>("sgnu")),
@@ -43,57 +30,57 @@ JacMat::JacMat(const InputParameters & parameters) :
     _iz_coeff_efield_b(declareProperty<Real>("iz_coeff_efield_b")),
     _iz_coeff_efield_c(declareProperty<Real>("iz_coeff_efield_c")),
     _ku(declareProperty<Real>("ku")),
-  _kuu(declareProperty<Real>("kuu")),
-  _N_A(declareProperty<Real>("N_A")),
-  _e(declareProperty<Real>("e")),
+    _kuu(declareProperty<Real>("kuu")),
+    _N_A(declareProperty<Real>("N_A")),
+    _e(declareProperty<Real>("e")),
     _kv(declareProperty<Real>("kv")),
-  _kvv(declareProperty<Real>("kvv")),
-  _diffu1(declareProperty<Real>("diffu1")),
-  _diffu2(declareProperty<Real>("diffu2")),
-  _se_coeff(declareProperty<Real>("se_coeff")),
-  _se_energy(declareProperty<Real>("se_energy")),
-  _eps(declareProperty<Real>("eps")),
-  _mem(declareProperty<Real>("mem")),
-  _d_interp(declareProperty<Real>("d_interp")),
-  _d_d_interp_d_v(declareProperty<Real>("d_d_interp_d_v")),
-  _d_muem_d_actual_mean_en(declareProperty<Real>("d_muem_d_actual_mean_en")),
-  _d_mumean_en_d_actual_mean_en(declareProperty<Real>("d_mumean_en_d_actual_mean_en")),
-  _d_diffem_d_actual_mean_en(declareProperty<Real>("d_diffem_d_actual_mean_en")),
-  _d_diffmean_en_d_actual_mean_en(declareProperty<Real>("d_diffmean_en_d_actual_mean_en")),
-  _alpha_iz(declareProperty<Real>("alpha_iz")),
-  _d_iz_d_actual_mean_en(declareProperty<Real>("d_iz_d_actual_mean_en")),
-  _alpha_ex(declareProperty<Real>("alpha_ex")),
-  _d_ex_d_actual_mean_en(declareProperty<Real>("d_ex_d_actual_mean_en")),
-  _alpha_el(declareProperty<Real>("alpha_el")),
-  _d_el_d_actual_mean_en(declareProperty<Real>("d_el_d_actual_mean_en")),
-  _Eiz(declareProperty<Real>("Eiz")),
-  _Eex(declareProperty<Real>("Eex")),
-  _mGas(declareProperty<Real>("mGas")),
-  _k_boltz(declareProperty<Real>("k_boltz")),
-  _T_heavy(declareProperty<Real>("T_heavy")),
-  _massu(declareProperty<Real>("massu")),
-  _massArp(declareProperty<Real>("massArp")),
-  _sgnp(declareProperty<Real>("sgnp")),
-  _mup(declareProperty<Real>("mup")),
-  _muw(declareProperty<Real>("muw")),
-  _diffp(declareProperty<Real>("diffp")),
-  _muArp(declareProperty<Real>("muArp")),
-  _diffArp(declareProperty<Real>("diffArp")),
-  _sgnArp(declareProperty<Real>("sgnArp")),
-  _actual_mean_en(declareProperty<Real>("actual_mean_en")),
-  _muOHm(declareProperty<Real>("muOHm")),
-  _diffOHm(declareProperty<Real>("diffOHm")),
-  _sgnOHm(declareProperty<Real>("sgnOHm")),
-  _muemliq(declareProperty<Real>("muemliq")),
-  _diffemliq(declareProperty<Real>("diffemliq")),
-  _sgnemliq(declareProperty<Real>("sgnemliq")),
-  _kemliqemliq(declareProperty<Real>("kemliqemliq")),
-  _kemliq(declareProperty<Real>("kemliq")),
+    _kvv(declareProperty<Real>("kvv")),
+    _diffu1(declareProperty<Real>("diffu1")),
+    _diffu2(declareProperty<Real>("diffu2")),
+    _se_coeff(declareProperty<Real>("se_coeff")),
+    _se_energy(declareProperty<Real>("se_energy")),
+    _eps(declareProperty<Real>("eps")),
+    _mem(declareProperty<Real>("mem")),
+    _d_interp(declareProperty<Real>("d_interp")),
+    _d_d_interp_d_v(declareProperty<Real>("d_d_interp_d_v")),
+    _d_muem_d_actual_mean_en(declareProperty<Real>("d_muem_d_actual_mean_en")),
+    _d_mumean_en_d_actual_mean_en(declareProperty<Real>("d_mumean_en_d_actual_mean_en")),
+    _d_diffem_d_actual_mean_en(declareProperty<Real>("d_diffem_d_actual_mean_en")),
+    _d_diffmean_en_d_actual_mean_en(declareProperty<Real>("d_diffmean_en_d_actual_mean_en")),
+    _alpha_iz(declareProperty<Real>("alpha_iz")),
+    _d_iz_d_actual_mean_en(declareProperty<Real>("d_iz_d_actual_mean_en")),
+    _alpha_ex(declareProperty<Real>("alpha_ex")),
+    _d_ex_d_actual_mean_en(declareProperty<Real>("d_ex_d_actual_mean_en")),
+    _alpha_el(declareProperty<Real>("alpha_el")),
+    _d_el_d_actual_mean_en(declareProperty<Real>("d_el_d_actual_mean_en")),
+    _Eiz(declareProperty<Real>("Eiz")),
+    _Eex(declareProperty<Real>("Eex")),
+    _mGas(declareProperty<Real>("mGas")),
+    _k_boltz(declareProperty<Real>("k_boltz")),
+    _T_heavy(declareProperty<Real>("T_heavy")),
+    _massu(declareProperty<Real>("massu")),
+    _massArp(declareProperty<Real>("massArp")),
+    _sgnp(declareProperty<Real>("sgnp")),
+    _mup(declareProperty<Real>("mup")),
+    _muw(declareProperty<Real>("muw")),
+    _diffp(declareProperty<Real>("diffp")),
+    _muArp(declareProperty<Real>("muArp")),
+    _diffArp(declareProperty<Real>("diffArp")),
+    _sgnArp(declareProperty<Real>("sgnArp")),
+    _actual_mean_en(declareProperty<Real>("actual_mean_en")),
+    _muOHm(declareProperty<Real>("muOHm")),
+    _diffOHm(declareProperty<Real>("diffOHm")),
+    _sgnOHm(declareProperty<Real>("sgnOHm")),
+    _muemliq(declareProperty<Real>("muemliq")),
+    _diffemliq(declareProperty<Real>("diffemliq")),
+    _sgnemliq(declareProperty<Real>("sgnemliq")),
+    _kemliqemliq(declareProperty<Real>("kemliqemliq")),
+    _kemliq(declareProperty<Real>("kemliq")),
 
-  _v(isCoupled("v") ? coupledValue("v") : _zero),
-  _mean_en(isCoupled("mean_en") ? coupledValue("mean_en") : _zero),
-  _em(isCoupled("em") ? coupledValue("em") : _zero),
-  _emliq(isCoupled("emliq") ? coupledValue("emliq") : _zero)
+    _v(isCoupled("v") ? coupledValue("v") : _zero),
+    _mean_en(isCoupled("mean_en") ? coupledValue("mean_en") : _zero),
+    _em(isCoupled("em") ? coupledValue("em") : _zero),
+    _emliq(isCoupled("emliq") ? coupledValue("emliq") : _zero)
 
 {
   std::vector<Real> actual_mean_energy;
@@ -102,27 +89,29 @@ JacMat::JacMat(const InputParameters & parameters) :
   std::vector<Real> alphaEl;
   std::vector<Real> mu;
   std::vector<Real> diff;
-  char* zapDirPoint;
+  char * zapDirPoint;
   zapDirPoint = getenv("ZAPDIR");
   std::string zapDir;
 
-  if (zapDirPoint == NULL) {
+  if (zapDirPoint == NULL)
+  {
     std::cerr << "Environment variable ZAPDIR not defined." << std::endl;
     std::exit(1);
   }
-  else {
+  else
+  {
     zapDir = std::string(zapDirPoint);
   }
 
   std::string tdPath = "/src/materials/test2.txt";
   std::string path = zapDir + tdPath;
   const char * charPathNew = path.c_str();
-  std::ifstream newfile (charPathNew);
+  std::ifstream newfile(charPathNew);
   Real value_new;
 
   if (newfile.is_open())
   {
-    while ( newfile >> value_new )
+    while (newfile >> value_new)
     {
       actual_mean_energy.push_back(value_new);
       newfile >> value_new;
@@ -139,10 +128,12 @@ JacMat::JacMat(const InputParameters & parameters) :
     newfile.close();
   }
 
-  else std::cerr << "Unable to open file" << std::endl;
+  else
+    std::cerr << "Unable to open file" << std::endl;
 
   _alpha_interpolation.setData(actual_mean_energy, alpha);
-  // _d_alpha_d_actual_mean_energy_interpolation.setData(actual_mean_energy, d_alpha_d_actual_mean_energy);
+  // _d_alpha_d_actual_mean_energy_interpolation.setData(actual_mean_energy,
+  // d_alpha_d_actual_mean_energy);
   _alphaEx_interpolation.setData(actual_mean_energy, alphaEx);
   _alphaEl_interpolation.setData(actual_mean_energy, alphaEl);
   _mu_interpolation.setData(actual_mean_energy, mu);
@@ -166,10 +157,12 @@ JacMat::computeQpProperties()
   _diffem[_qp] = _diff_interpolation.sample(std::exp(_mean_en[_qp] - _em[_qp]));
   // _diffem[_qp] = 1.1;
   _diffmean_en[_qp] = 5. / 3. * _diffem[_qp];
-  _d_muem_d_actual_mean_en[_qp] = _mu_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
+  _d_muem_d_actual_mean_en[_qp] =
+      _mu_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
   // _d_muem_d_actual_mean_en[_qp] = 0.;
   _d_mumean_en_d_actual_mean_en[_qp] = 5. / 3. * _d_muem_d_actual_mean_en[_qp];
-  _d_diffem_d_actual_mean_en[_qp] = _diff_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
+  _d_diffem_d_actual_mean_en[_qp] =
+      _diff_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
   // _d_diffem_d_actual_mean_en[_qp] = 0;
   _d_diffmean_en_d_actual_mean_en[_qp] = 5. / 3. * _d_diffem_d_actual_mean_en[_qp];
   _diffpotential[_qp] = 1.1;
@@ -197,12 +190,15 @@ JacMat::computeQpProperties()
   _se_energy[_qp] = 1.1;
   _eps[_qp] = 1.1;
   _mem[_qp] = 1.1;
-  _alpha_iz[_qp] = _alpha_interpolation.sample(std::exp(_mean_en[_qp]-_em[_qp]));
-  _d_iz_d_actual_mean_en[_qp] = _alpha_interpolation.sampleDerivative(std::exp(_mean_en[_qp]-_em[_qp]));
-  _alpha_ex[_qp] = _alphaEx_interpolation.sample(std::exp(_mean_en[_qp]-_em[_qp]));
-  _d_ex_d_actual_mean_en[_qp] = _alphaEx_interpolation.sampleDerivative(std::exp(_mean_en[_qp]-_em[_qp]));
-  _alpha_el[_qp] = _alphaEl_interpolation.sample(std::exp(_mean_en[_qp]-_em[_qp]));
-  _d_el_d_actual_mean_en[_qp] = _alphaEl_interpolation.sampleDerivative(std::exp(_mean_en[_qp]-_em[_qp]));
+  _alpha_iz[_qp] = _alpha_interpolation.sample(std::exp(_mean_en[_qp] - _em[_qp]));
+  _d_iz_d_actual_mean_en[_qp] =
+      _alpha_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
+  _alpha_ex[_qp] = _alphaEx_interpolation.sample(std::exp(_mean_en[_qp] - _em[_qp]));
+  _d_ex_d_actual_mean_en[_qp] =
+      _alphaEx_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
+  _alpha_el[_qp] = _alphaEl_interpolation.sample(std::exp(_mean_en[_qp] - _em[_qp]));
+  _d_el_d_actual_mean_en[_qp] =
+      _alphaEl_interpolation.sampleDerivative(std::exp(_mean_en[_qp] - _em[_qp]));
   _Eiz[_qp] = 1.1;
   _Eex[_qp] = 1.1;
   _mem[_qp] = 1.1;

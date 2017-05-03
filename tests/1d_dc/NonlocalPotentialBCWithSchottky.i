@@ -149,6 +149,7 @@ area = 5.02e-7 # Formerly 3.14e-6
 	[../]
 	[./em_ionization]
 		type = ElectronsFromIonization
+		em = em
 		variable = em
 		potential = potential
 		mean_en = mean_en

@@ -1,26 +1,13 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef POSITION_H
 #define POSITION_H
 
 #include "AuxKernel.h"
 
-//Forward Declarations
+// Forward Declarations
 class Position;
 
-template<>
+template <>
 InputParameters validParams<Position>();
 
 /**
@@ -41,7 +28,6 @@ protected:
   Real _r_units;
 
   virtual Real computeValue();
-
 };
 
 #endif // POSITION_H

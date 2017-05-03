@@ -3,33 +3,31 @@
 
 #include "GeneralUserObject.h"
 
-//Forward Declarations
+// Forward Declarations
 class ProvideMobility;
 
-template<>
+template <>
 InputParameters validParams<ProvideMobility>();
 
 class ProvideMobility : public GeneralUserObject
 {
 public:
-	ProvideMobility(const InputParameters & parameters);
+  ProvideMobility(const InputParameters & parameters);
 
-	Real electrode_area() const;
-	Real ballast_resist() const;
-	//Real coulomb_charge() const;
+  Real electrode_area() const;
+  Real ballast_resist() const;
+  // Real coulomb_charge() const;
 
-	virtual void initialize();
+  virtual void initialize();
 
-	virtual void execute();
+  virtual void execute();
 
-	virtual void finalize();
+  virtual void finalize();
 
 protected:
-
-	Real _electrode_area;
-	Real _ballast_resist;
-	//const MaterialProperty<Real> & _e;
-
+  Real _electrode_area;
+  Real _ballast_resist;
+  // const MaterialProperty<Real> & _e;
 };
 
 #endif

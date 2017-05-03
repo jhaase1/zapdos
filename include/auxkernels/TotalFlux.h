@@ -5,17 +5,17 @@
 
 class TotalFlux;
 
-template<>
+template <>
 InputParameters validParams<TotalFlux>();
 
 class TotalFlux : public AuxKernel
 {
 public:
   TotalFlux(const InputParameters & parameters);
-  
+
   virtual ~TotalFlux() {}
   virtual Real computeValue();
-  
+
 protected:
   MooseVariable & _density_var;
   const VariableValue & _density_log;
@@ -26,4 +26,4 @@ protected:
   const MaterialProperty<Real> & _diff;
 };
 
-#endif //TOTALFLUX_H
+#endif // TOTALFLUX_H

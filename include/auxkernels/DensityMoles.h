@@ -5,7 +5,7 @@
 
 class DensityMoles;
 
-template<>
+template <>
 InputParameters validParams<DensityMoles>();
 
 class DensityMoles : public Density
@@ -16,11 +16,10 @@ public:
   virtual ~DensityMoles() {}
 
 protected:
-
   virtual Real computeValue();
 
   bool _convert_moles;
   const MaterialProperty<Real> & _N_A;
 };
 
-#endif //DENSITYMOLES_H
+#endif // DENSITYMOLES_H

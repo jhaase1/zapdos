@@ -2,9 +2,12 @@
 #include "Moose.h"
 #include "AppFactory.h"
 #include "MooseSyntax.h"
+#include "SquirrelApp.h"
 // #include "ModulesApp.h"
 
 // Kernels
+#include "PotentialGradientSource.h"
+#include "EFieldMagnitudeSource.h"
 #include "UserSource.h"
 #include "AxisymmetricCurlZ.h"
 #include "TM0CylindricalEz.h"
@@ -14,6 +17,10 @@
 #include "CoeffDiffusionElectrons.h"
 #include "CoeffDiffusionEnergy.h"
 #include "EFieldAdvectionElectrons.h"
+#include "DriftDiffusion.h"
+#include "DriftDiffusionUser.h"
+#include "DriftDiffusionElectrons.h"
+#include "DriftDiffusionEnergy.h"
 #include "ProductAABBRxn.h"
 #include "ProductFirstOrderRxn.h"
 #include "LogStabilizationMoles.h"
@@ -26,6 +33,7 @@
 #include "IonsFromIonization.h"
 #include "EFieldArtDiff.h"
 #include "ElectronsFromIonization.h"
+#include "ElectronsFromIonizationUser.h"
 #include "CoeffDiffusion.h"
 #include "ReactantFirstOrderRxn.h"
 #include "EFieldAdvection.h"
@@ -35,6 +43,9 @@
 #include "SetRHS.h"
 
 // AuxKernels
+#include "Sigma.h"
+#include "DriftDiffusionFluxAux.h"
+#include "UserFlux.h"
 #include "DensityMoles.h"
 #include "TM0CylindricalErAux.h"
 #include "TM0CylindricalEzAux.h"
@@ -47,11 +58,11 @@
 #include "Position.h"
 #include "ElectronTemperature.h"
 #include "DiffusiveFlux.h"
-#include "Density.h"
 #include "Efield.h"
 #include "Potential.h"
 
 // Materials
+#include "SigmaMat.h"
 #include "JacMat.h"
 #include "Gas.h"
 #include "Water.h"
@@ -65,6 +76,11 @@
 #include "CurrentDensityShapeSideUserObject.h"
 
 // Boundary Conditions
+#include "PotentialDriftOutflowBC.h"
+#include "DriftDiffusionDoNothingBC.h"
+#include "DriftDiffusionUserDoNothingBC.h"
+#include "ElectronAdvectionDoNothingBC.h"
+#include "ElectronDiffusionDoNothingBC.h"
 #include "TM0AntennaVertBC.h"
 #include "TM0PECVertBC.h"
 #include "MatchedValueLogBC.h"
@@ -84,7 +100,6 @@
 
 #include "HagelaarElectronBC.h"
 #include "HagelaarElectronAdvectionBC.h"
-
 #include "HagelaarEnergyBC.h"
 #include "HagelaarEnergyAdvectionBC.h"
 #include "SchottkyEmissionEnergyBC.h"
@@ -120,157 +135,178 @@
 // Functions
 #include "SmoothedStepFunction.h"
 
-template<>
-InputParameters validParams<ZapdosApp>()
+template <>
+InputParameters
+validParams<ZapdosApp>()
 {
-	InputParameters params = validParams<MooseApp>();
+  InputParameters params = validParams<MooseApp>();
 
-	params.set<bool>("use_legacy_output_syntax") = false;
-	params.set<bool>("use_legacy_uo_initialization") = false;
-	params.set<bool>("use_legacy_uo_aux_computation") = false;
-	return params;
+  params.set<bool>("use_legacy_output_syntax") = false;
+  params.set<bool>("use_legacy_uo_initialization") = false;
+  params.set<bool>("use_legacy_uo_aux_computation") = false;
+  return params;
 }
 
-ZapdosApp::ZapdosApp(InputParameters parameters) :
-		MooseApp(parameters)
+ZapdosApp::ZapdosApp(InputParameters parameters) : MooseApp(parameters)
 {
 
-	Moose::registerObjects(_factory);
-//	ModulesApp::registerObjects(_factory);
-	ZapdosApp::registerObjects(_factory);
+  Moose::registerObjects(_factory);
+  SquirrelApp::registerObjects(_factory);
+  ZapdosApp::registerObjects(_factory);
 
-	Moose::associateSyntax(_syntax, _action_factory);
-//	ModulesApp::associateSyntax(_syntax, _action_factory);
-	ZapdosApp::associateSyntax(_syntax, _action_factory);
+  Moose::associateSyntax(_syntax, _action_factory);
+  SquirrelApp::associateSyntax(_syntax, _action_factory);
+  ZapdosApp::associateSyntax(_syntax, _action_factory);
 }
 
-ZapdosApp::~ZapdosApp()
+ZapdosApp::~ZapdosApp() {}
+
+extern "C" void
+ZapdosApp__registerApps()
 {
+  ZapdosApp::registerApps();
 }
-
-extern "C" void ZapdosApp__registerApps() { ZapdosApp::registerApps(); }
 void
 ZapdosApp::registerApps()
 {
-	registerApp(ZapdosApp);
+  registerApp(ZapdosApp);
 }
 
 void
 ZapdosApp::registerObjects(Factory & factory)
 {
-	registerMeshModifier(NodeAndSidesetBetweenSubdomains);
-	registerKernel(AxisymmetricCurlZ);
-	registerKernel(UserSource);
-	registerKernel(TM0CylindricalEz);
-	registerKernel(TM0CylindricalEr);
-	registerKernel(TM0Cylindrical);
-	registerKernel(CoeffDiffusionElectrons);
-	registerKernel(CoeffDiffusionEnergy);
-	registerKernel(EFieldAdvectionElectrons);
-	registerKernel(EFieldAdvectionEnergy);
-	registerKernel(ChargeSourceMoles_KV);
-	registerKernel(ReactantFirstOrderRxn);
-	registerKernel(ReactantAARxn);
-	registerKernel(IonsFromIonization);
-	registerKernel(EFieldArtDiff);
-	registerKernel(ElectronEnergyLossFromIonization);
-	registerKernel(ElectronEnergyLossFromExcitation);
-	registerKernel(ElectronEnergyLossFromElastic);
-	registerKernel(CoeffDiffusion);
-	registerKernel(EFieldAdvection);
-	registerKernel(JouleHeating);
-	registerKernel(ElectronTimeDerivative);
-	registerKernel(ElectronsFromIonization);
-	registerKernel(CoeffDiffusionLin);
-	registerKernel(LogStabilizationMoles);
-	registerKernel(ProductFirstOrderRxn);
-	registerKernel(ProductAABBRxn);
-	registerKernel(SetValue);
-	registerKernel(SetRHS);
+  registerMeshModifier(NodeAndSidesetBetweenSubdomains);
 
-	registerAux(AbsValueAux);
-	registerAux(DensityMoles);
-	registerAux(TM0CylindricalEzAux);
-	registerAux(TM0CylindricalErAux);
-	registerAux(Current);
-	registerAux(PowerDep);
-	registerAux(ProcRate);
-	registerAux(TotalFlux);
-	registerAux(Position);
-	registerAux(Efield);
-	registerAux(Potential);
-	registerAux(ElectronTemperature);
-	registerAux(Density);
-	registerAux(DiffusiveFlux);
-	registerAux(EFieldAdvAux);
-	registerMaterial(JacMat);
-	registerMaterial(Gas);
-	registerMaterial(Water);
-	registerIndicator(AnalyticalDiffIndicator);
-	registerUserObject(BlockAverageValue);
-	registerUserObject(ProvideMobility);
-	registerUserObject(CurrentDensityShapeSideUserObject);
+  registerKernel(PotentialGradientSource);
+  registerKernel(EFieldMagnitudeSource);
+  registerKernel(AxisymmetricCurlZ);
+  registerKernel(UserSource);
+  registerKernel(TM0CylindricalEz);
+  registerKernel(TM0CylindricalEr);
+  registerKernel(TM0Cylindrical);
+  registerKernel(CoeffDiffusionElectrons);
+  registerKernel(CoeffDiffusionEnergy);
+  registerKernel(EFieldAdvectionElectrons);
+  registerKernel(EFieldAdvectionEnergy);
+  registerKernel(DriftDiffusion);
+  registerKernel(DriftDiffusionUser);
+  registerKernel(DriftDiffusionElectrons);
+  registerKernel(DriftDiffusionEnergy);
+  registerKernel(ChargeSourceMoles_KV);
+  registerKernel(ReactantFirstOrderRxn);
+  registerKernel(ReactantAARxn);
+  registerKernel(IonsFromIonization);
+  registerKernel(EFieldArtDiff);
+  registerKernel(ElectronEnergyLossFromIonization);
+  registerKernel(ElectronEnergyLossFromExcitation);
+  registerKernel(ElectronEnergyLossFromElastic);
+  registerKernel(CoeffDiffusion);
+  registerKernel(EFieldAdvection);
+  registerKernel(JouleHeating);
+  registerKernel(ElectronTimeDerivative);
+  registerKernel(ElectronsFromIonization);
+  registerKernel(ElectronsFromIonizationUser);
+  registerKernel(CoeffDiffusionLin);
+  registerKernel(LogStabilizationMoles);
+  registerKernel(ProductFirstOrderRxn);
+  registerKernel(ProductAABBRxn);
+  registerKernel(SetValue);
+  registerKernel(SetRHS);
 
-	registerBoundaryCondition(TM0AntennaVertBC);
-	registerBoundaryCondition(TM0PECVertBC);
-	registerBoundaryCondition(PenaltyCircuitPotential);
-	registerBoundaryCondition(CircuitDirichletPotential);
-	registerBoundaryCondition(SecondaryElectronBC);
-	registerBoundaryCondition(FieldEmissionBC);
-	registerBoundaryCondition(SchottkyEmissionBC);
-	registerBoundaryCondition(HagelaarIonAdvectionBC);
-	registerBoundaryCondition(HagelaarIonDiffusionBC);
-	registerBoundaryCondition(HagelaarElectronBC);
-	registerBoundaryCondition(HagelaarElectronAdvectionBC);
-	
-	registerBoundaryCondition(HagelaarEnergyBC);
-	registerBoundaryCondition(SchottkyEmissionEnergyBC);
-	registerBoundaryCondition(HagelaarEnergyAdvectionBC);
+  registerAux(Sigma);
+  registerAux(DriftDiffusionFluxAux);
+  registerAux(AbsValueAux);
+  registerAux(DensityMoles);
+  registerAux(TM0CylindricalEzAux);
+  registerAux(TM0CylindricalErAux);
+  registerAux(Current);
+  registerAux(PowerDep);
+  registerAux(ProcRate);
+  registerAux(TotalFlux);
+  registerAux(Position);
+  registerAux(Efield);
+  registerAux(Potential);
+  registerAux(ElectronTemperature);
+  registerAux(DiffusiveFlux);
+  registerAux(EFieldAdvAux);
+  registerAux(UserFlux);
 
-	registerBoundaryCondition(NeumannCircuitVoltageMoles_KV);
-	registerBoundaryCondition(NeumannCircuitVoltageNew);
-	registerBoundaryCondition(DCIonBC);
+  registerMaterial(SigmaMat);
+  registerMaterial(JacMat);
+  registerMaterial(Gas);
+  registerMaterial(Water);
 
-	registerInterfaceKernel(InterfaceAdvection);
-	registerInterfaceKernel(HphiRadialInterface);
-	registerInterfaceKernel(InterfaceLogDiffusionElectrons);
+  registerIndicator(AnalyticalDiffIndicator);
 
-	registerDGKernel(DGCoeffDiffusion);
-	registerDGKernel(DGEFieldAdvection);
-	registerConstraint(ArbitrarilyTiedValueConstraint);
+  registerUserObject(BlockAverageValue);
+  registerUserObject(ProvideMobility);
+  registerUserObject(CurrentDensityShapeSideUserObject);
 
-	registerPostprocessor(SideTotFluxIntegral);
-	registerPostprocessor(SchottkyEmissionPostProcessor);
+  registerBoundaryCondition(PotentialDriftOutflowBC);
+  registerBoundaryCondition(DriftDiffusionDoNothingBC);
+  registerBoundaryCondition(DriftDiffusionUserDoNothingBC);
+  registerBoundaryCondition(TM0AntennaVertBC);
+  registerBoundaryCondition(ElectronAdvectionDoNothingBC);
+  registerBoundaryCondition(ElectronDiffusionDoNothingBC);
+  registerBoundaryCondition(TM0PECVertBC);
+  registerBoundaryCondition(PenaltyCircuitPotential);
+  registerBoundaryCondition(CircuitDirichletPotential);
+  registerBoundaryCondition(SecondaryElectronBC);
+  registerBoundaryCondition(FieldEmissionBC);
+  registerBoundaryCondition(SchottkyEmissionBC);
+  registerBoundaryCondition(HagelaarIonAdvectionBC);
+  registerBoundaryCondition(HagelaarIonDiffusionBC);
+  registerBoundaryCondition(HagelaarElectronBC);
+  registerBoundaryCondition(HagelaarElectronAdvectionBC);
+  registerBoundaryCondition(HagelaarEnergyBC);
+  registerBoundaryCondition(SchottkyEmissionEnergyBC);
+  registerBoundaryCondition(HagelaarEnergyAdvectionBC);
+  registerBoundaryCondition(NeumannCircuitVoltageMoles_KV);
+  registerBoundaryCondition(NeumannCircuitVoltageNew);
+  registerBoundaryCondition(DCIonBC);
 
-	registerFunction(SmoothedStepFunction);
+  registerInterfaceKernel(InterfaceAdvection);
+  registerInterfaceKernel(HphiRadialInterface);
+  registerInterfaceKernel(InterfaceLogDiffusionElectrons);
+
+  registerDGKernel(DGCoeffDiffusion);
+  registerDGKernel(DGEFieldAdvection);
+
+  registerConstraint(ArbitrarilyTiedValueConstraint);
+
+  registerPostprocessor(SideTotFluxIntegral);
+  registerPostprocessor(SchottkyEmissionPostProcessor);
+
+  registerFunction(SmoothedStepFunction);
 }
 
 void
 ZapdosApp::associateSyntax(Syntax & syntax, ActionFactory & action_factory)
 {
-	// add actions
-	registerAction(AddLotsOfCoeffDiffusion, "add_variable");
-	registerAction(AddLotsOfCoeffDiffusion, "add_kernel");
-	registerAction(AddLotsOfCoeffDiffusion, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfCoeffDiffusion", "LotsOfCoeffDiffusion");
-	registerAction(AddLotsOfVariables, "add_variable");
-	registerAction(AddLotsOfVariables, "add_kernel");
-	registerAction(AddLotsOfVariables, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfVariables", "LotsOfVariables");
-	registerAction(AddLotsOfSources, "add_variable");
-	registerAction(AddLotsOfSources, "add_kernel");
-	registerAction(AddLotsOfSources, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfSources", "LotsOfSources");
-	registerAction(AddLotsOfTimeDerivatives, "add_variable");
-	registerAction(AddLotsOfTimeDerivatives, "add_kernel");
-	registerAction(AddLotsOfTimeDerivatives, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfTimeDerivatives", "LotsOfTimeDerivatives");
-	registerAction(AddLotsOfEFieldAdvection, "add_variable");
-	registerAction(AddLotsOfEFieldAdvection, "add_kernel");
-	registerAction(AddLotsOfEFieldAdvection, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfEFieldAdvection", "LotsOfEFieldAdvection");
-	registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_variable");
-	registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_kernel");
-	registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_bc");
-	syntax.registerActionSyntax("AddLotsOfPotentialDrivenArtificialDiff", "LotsOfPotentialDrivenArtificialDiff");
+  // add actions
+  registerAction(AddLotsOfCoeffDiffusion, "add_variable");
+  registerAction(AddLotsOfCoeffDiffusion, "add_kernel");
+  registerAction(AddLotsOfCoeffDiffusion, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfCoeffDiffusion", "LotsOfCoeffDiffusion");
+  registerAction(AddLotsOfVariables, "add_variable");
+  registerAction(AddLotsOfVariables, "add_kernel");
+  registerAction(AddLotsOfVariables, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfVariables", "LotsOfVariables");
+  registerAction(AddLotsOfSources, "add_variable");
+  registerAction(AddLotsOfSources, "add_kernel");
+  registerAction(AddLotsOfSources, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfSources", "LotsOfSources");
+  registerAction(AddLotsOfTimeDerivatives, "add_variable");
+  registerAction(AddLotsOfTimeDerivatives, "add_kernel");
+  registerAction(AddLotsOfTimeDerivatives, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfTimeDerivatives", "LotsOfTimeDerivatives");
+  registerAction(AddLotsOfEFieldAdvection, "add_variable");
+  registerAction(AddLotsOfEFieldAdvection, "add_kernel");
+  registerAction(AddLotsOfEFieldAdvection, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfEFieldAdvection", "LotsOfEFieldAdvection");
+  registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_variable");
+  registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_kernel");
+  registerAction(AddLotsOfPotentialDrivenArtificialDiff, "add_bc");
+  syntax.registerActionSyntax("AddLotsOfPotentialDrivenArtificialDiff",
+                              "LotsOfPotentialDrivenArtificialDiff");
 }

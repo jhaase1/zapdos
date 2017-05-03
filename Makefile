@@ -3,7 +3,7 @@
 ###############################################################################
 #
 # Optional Environment variables
-# MOOSE_DIR        - Root directory of the MOOSE project 
+# MOOSE_DIR        - Root directory of the MOOSE project
 #
 ###############################################################################
 # Use the MOOSE submodule if it exists and MOOSE_DIR is not set
@@ -23,6 +23,19 @@ include $(FRAMEWORK_DIR)/moose.mk
 ALL_MODULES := no
 include $(MOOSE_DIR)/modules/modules.mk
 ###############################################################################
+
+# Use the SQUIRREL submodule if it exists and SQUIRREL_DIR is not set
+SQUIRREL_SUBMODULE    := $(CURDIR)/squirrel
+ifneq ($(wildcard $(SQUIRREL_SUBMODULE)/Makefile),)
+  SQUIRREL_DIR        ?= $(SQUIRREL_SUBMODULE)
+else
+  SQUIRREL_DIR        ?= $(shell dirname `pwd`)/squirrel
+endif
+
+# squirrel
+APPLICATION_DIR    := $(SQUIRREL_DIR)
+APPLICATION_NAME   := squirrel
+include            $(FRAMEWORK_DIR)/app.mk
 
 # dep apps
 APPLICATION_DIR    := $(CURDIR)

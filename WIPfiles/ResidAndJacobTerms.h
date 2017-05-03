@@ -1,26 +1,13 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef RESIDANDJACOBTERMS_H
 #define RESIDANDJACOBTERMS_H
 
 #include "ElementUserObject.h"
 
-//Forward Declarations
+// Forward Declarations
 class ResidAndJacobTerms;
 
-template<>
+template <>
 InputParameters validParams<ResidAndJacobTerms>();
 
 class ResidAndJacobTerms : public ElementUserObject
@@ -39,7 +26,6 @@ public:
   virtual void finalize();
 
 protected:
-
   const VariableValue & _u;
   const VariableGradient & _grad_u;
   const MaterialProperty<Real> & _diffusivity;

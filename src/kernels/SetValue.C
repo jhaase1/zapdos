@@ -1,23 +1,22 @@
 #include "SetValue.h"
 
-template<>
-InputParameters validParams<SetValue>()
+template <>
+InputParameters
+validParams<SetValue>()
 {
   InputParameters params = validParams<Kernel>();
   params.addRequiredParam<Real>("value", "The potential units.");
   return params;
 }
 
-SetValue::SetValue(const InputParameters & parameters) :
-  Kernel(parameters),
+SetValue::SetValue(const InputParameters & parameters)
+  : Kernel(parameters),
 
-  _value(getParam<Real>("value"))
+    _value(getParam<Real>("value"))
 {
 }
 
-SetValue::~SetValue()
-{
-}
+SetValue::~SetValue() {}
 
 Real
 SetValue::computeQpResidual()

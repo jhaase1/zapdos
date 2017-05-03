@@ -1,23 +1,22 @@
 #include "SetRHS.h"
 
-template<>
-InputParameters validParams<SetRHS>()
+template <>
+InputParameters
+validParams<SetRHS>()
 {
   InputParameters params = validParams<Kernel>();
   params.addRequiredParam<Real>("value", "The potential units.");
   return params;
 }
 
-SetRHS::SetRHS(const InputParameters & parameters) :
-  Kernel(parameters),
+SetRHS::SetRHS(const InputParameters & parameters)
+  : Kernel(parameters),
 
-  _value(getParam<Real>("value"))
+    _value(getParam<Real>("value"))
 {
 }
 
-SetRHS::~SetRHS()
-{
-}
+SetRHS::~SetRHS() {}
 
 Real
 SetRHS::computeQpResidual()

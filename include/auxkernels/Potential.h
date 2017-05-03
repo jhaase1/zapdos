@@ -5,7 +5,7 @@
 
 class Potential;
 
-template<>
+template <>
 InputParameters validParams<Potential>();
 
 class Potential : public AuxKernel
@@ -16,12 +16,11 @@ public:
   virtual ~Potential() {}
 
 protected:
-
   virtual Real computeValue();
 
   const VariableValue & _potential;
-	std::string _potential_units;
-	Real _voltage_scaling;
+  std::string _potential_units;
+  Real _voltage_scaling;
 };
 
-#endif //POTENTIAL_H
+#endif // POTENTIAL_H

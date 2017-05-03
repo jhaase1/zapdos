@@ -1,50 +1,37 @@
-/****************************************************************/
-/*							 DO NOT MODIFY THIS HEADER											*/
-/* MOOSE - Multiphysics Object Oriented Simulation Environment	*/
-/*																															*/
-/*					 (c) 2010 Battelle Energy Alliance, LLC							*/
-/*									 ALL RIGHTS RESERVED												*/
-/*																															*/
-/*					Prepared by Battelle Energy Alliance, LLC						*/
-/*						Under Contract No. DE-AC07-05ID14517							*/
-/*						With the U. S. Department of Energy								*/
-/*																															*/
-/*						See COPYRIGHT for full restrictions								*/
-/****************************************************************/
-
 #include "CoeffDiffusionLin.h"
 
+// MOOSE includes
+#include "MooseVariable.h"
 
-template<>
-InputParameters validParams<CoeffDiffusionLin>()
+template <>
+InputParameters
+validParams<CoeffDiffusionLin>()
 {
-	InputParameters params = validParams<Diffusion>();
-	params.addRequiredParam<Real>("position_units", "Units of position.");
-	return params;
+  InputParameters params = validParams<Diffusion>();
+  params.addRequiredParam<Real>("position_units", "Units of position.");
+  return params;
 }
 
-CoeffDiffusionLin::CoeffDiffusionLin(const InputParameters & parameters) :
-	Diffusion(parameters),
+CoeffDiffusionLin::CoeffDiffusionLin(const InputParameters & parameters)
+  : Diffusion(parameters),
 
-	_r_units(1. / getParam<Real>("position_units")),
-	_diffusivity(getMaterialProperty<Real>("diff" + _var.name()))
+    _r_units(1. / getParam<Real>("position_units")),
+    _diffusivity(getMaterialProperty<Real>("diff" + _var.name()))
 {
 }
 
-CoeffDiffusionLin::~CoeffDiffusionLin()
-{
-}
+CoeffDiffusionLin::~CoeffDiffusionLin() {}
 
 Real
 CoeffDiffusionLin::computeQpResidual()
 {
-	return -_diffusivity[_qp] * _grad_u[_qp] * _r_units * -_grad_test[_i][_qp] * _r_units ;
-//	return _diffusivity[_qp] * Diffusion::computeQpResidual();
+  return -_diffusivity[_qp] * _grad_u[_qp] * _r_units * -_grad_test[_i][_qp] * _r_units;
+  //	return _diffusivity[_qp] * Diffusion::computeQpResidual();
 }
 
 Real
 CoeffDiffusionLin::computeQpJacobian()
 {
-	return -_diffusivity[_qp] * _grad_phi[_j][_qp] * _r_units * -_grad_test[_i][_qp] * _r_units ;
-//	return _diffusivity[_qp] * Diffusion::computeQpJacobian();
+  return -_diffusivity[_qp] * _grad_phi[_j][_qp] * _r_units * -_grad_test[_i][_qp] * _r_units;
+  //	return _diffusivity[_qp] * Diffusion::computeQpJacobian();
 }

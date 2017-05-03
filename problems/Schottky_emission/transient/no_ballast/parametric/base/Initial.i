@@ -33,6 +33,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	 potential_units = V
 	use_moles = true
 #	use_moles = false
+  em = em
 []
 
 [Mesh]
@@ -65,7 +66,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	ss_check_tol = 1E-15
 #	ss_tmin = ${steadyStateTime}
 
-	petsc_options = '-snes_ksp_ew -superlu_dist'
+	petsc_options = '-snes_ksp_ew -superlu_dist -snes_converged_reason -snes_linesearch_monitor'
 	solve_type = NEWTON
 
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package -pc_factor_shift_type -pc_factor_shift_amount -ksp_type -snes_linesearch_minlambda -ksp_gmres_restart'
@@ -85,18 +86,23 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	nl_max_its = 40
 	[./TimeStepper]
 		type = IterationAdaptiveDT
-		dt = ${/ ${onTime} 50 }
+		dt = .004096
 		cutback_factor = 0.8
 		growth_factor = 1.5
 		optimal_iterations = 25
 	[../]
 []
 
+[Debug]
+  show_var_residual_norms = true
+[]
+
+
 [Outputs]
 	print_perf_log = true
 	print_linear_residuals = false
 	console = true
-	
+
 	[./out]
 		type = Exodus
 		execute_on = 'final'
@@ -107,10 +113,6 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		execute_on = 'final'
 		num_files = 2
 	[../]
-[]
-
-[Debug]
-	show_var_residual_norms = false
 []
 
 [Postprocessors]
@@ -597,7 +599,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		variable = DiffusiveFlux_em
 		block = 0
 	[../]
-	
+
 	[./Emission_energy_flux]
 		type = ParsedAux
 		variable = Emission_energy_flux
@@ -605,7 +607,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		function = '-Current_em * (${work_function} + 2*8.6173303E-5*${cathode_temperature})'
 		execute_on = 'timestep_end'
 		block = 0
-	[../]	
+	[../]
 []
 
 [BCs]

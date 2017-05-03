@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef PRODUCTAABBRXN_H
 #define PRODUCTAABBRXN_H
@@ -20,7 +7,7 @@
 // Forward Declaration
 class ProductAABBRxn;
 
-template<>
+template <>
 InputParameters validParams<ProductAABBRxn>();
 
 class ProductAABBRxn : public Kernel
@@ -38,7 +25,6 @@ protected:
   unsigned int _v_id;
 
   // The reaction coefficient
-  const MaterialProperty<Real> &  _reaction_coeff;
-  
+  const MaterialProperty<Real> & _reaction_coeff;
 };
-#endif //PRODUCTAABBRXN_H
+#endif // PRODUCTAABBRXN_H

@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef EFIELDARTDIFF_H
 #define EFIELDARTDIFF_H
@@ -20,9 +7,8 @@
 
 class EFieldArtDiff;
 
-template<>
+template <>
 InputParameters validParams<EFieldArtDiff>();
-
 
 class EFieldArtDiff : public Kernel
 {
@@ -31,7 +17,6 @@ public:
   virtual ~EFieldArtDiff();
 
 protected:
-
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
@@ -48,6 +33,5 @@ protected:
 
   const MaterialProperty<Real> & _mu;
 };
-
 
 #endif /* EFIELDARTDIFF_H */

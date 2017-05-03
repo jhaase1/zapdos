@@ -1,35 +1,26 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
-
 #include "ProductFirstOrderRxn.h"
 
-template<>
-InputParameters validParams<ProductFirstOrderRxn>()
+// MOOSE includes
+#include "MooseVariable.h"
+
+template <>
+InputParameters
+validParams<ProductFirstOrderRxn>()
 {
   InputParameters params = validParams<Kernel>();
   params.addRequiredCoupledVar("v", "The variable that is reacting to create u.");
   return params;
 }
 
-ProductFirstOrderRxn::ProductFirstOrderRxn(const InputParameters & parameters) :
-    Kernel(parameters),
-    
-    _coupled_var(*getVar("v",0)),
+ProductFirstOrderRxn::ProductFirstOrderRxn(const InputParameters & parameters)
+  : Kernel(parameters),
+
+    _coupled_var(*getVar("v", 0)),
     _v(coupledValue("v")),
     _v_id(coupled("v")),
-    _reaction_coeff(getMaterialProperty<Real>("k"+_coupled_var.name()))
-{}
+    _reaction_coeff(getMaterialProperty<Real>("k" + _coupled_var.name()))
+{
+}
 
 Real
 ProductFirstOrderRxn::computeQpResidual()

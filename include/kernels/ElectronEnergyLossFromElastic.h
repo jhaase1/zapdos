@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef ELECTRONENERGYLOSSFROMELASTIC_H
 #define ELECTRONENERGYLOSSFROMELASTIC_H
@@ -19,7 +6,7 @@
 
 class ElectronEnergyLossFromElastic;
 
-template<>
+template <>
 InputParameters validParams<ElectronEnergyLossFromElastic>();
 
 class ElectronEnergyLossFromElastic : public Kernel
@@ -29,7 +16,6 @@ public:
   virtual ~ElectronEnergyLossFromElastic();
 
 protected:
-
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
@@ -53,6 +39,5 @@ protected:
   unsigned int _potential_id;
   unsigned int _em_id;
 };
-
 
 #endif /* ELECTRONENERGYLOSSFROMELASTIC_H */

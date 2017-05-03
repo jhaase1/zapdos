@@ -1,16 +1,3 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef EFIELDADVAUX_H
 #define EFIELDADVAUX_H
@@ -19,17 +6,15 @@
 
 class EFieldAdvAux;
 
-template<>
+template <>
 InputParameters validParams<EFieldAdvAux>();
 
 class EFieldAdvAux : public AuxKernel
 {
- public:
-
+public:
   EFieldAdvAux(const InputParameters & parameters);
 
- protected:
-
+protected:
   virtual Real computeValue();
 
   Real _r_units;
@@ -46,4 +31,4 @@ class EFieldAdvAux : public AuxKernel
   const MaterialProperty<Real> & _sgn;
 };
 
-#endif //EFIELDADVAUX_H
+#endif // EFIELDADVAUX_H

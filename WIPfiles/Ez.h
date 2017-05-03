@@ -1,26 +1,13 @@
-/****************************************************************/
-/*               DO NOT MODIFY THIS HEADER                      */
-/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-/*                                                              */
-/*           (c) 2010 Battelle Energy Alliance, LLC             */
-/*                   ALL RIGHTS RESERVED                        */
-/*                                                              */
-/*          Prepared by Battelle Energy Alliance, LLC           */
-/*            Under Contract No. DE-AC07-05ID14517              */
-/*            With the U. S. Department of Energy               */
-/*                                                              */
-/*            See COPYRIGHT for full restrictions               */
-/****************************************************************/
 
 #ifndef EZ_H
 #define EZ_H
 
 #include "AuxKernel.h"
 
-//Forward Declarations
+// Forward Declarations
 class Ez;
 
-template<>
+template <>
 InputParameters validParams<Ez>();
 
 /**
@@ -43,7 +30,7 @@ protected:
   virtual Real computeValue();
   virtual void computeVarValues(std::vector<Real> & values);
 
-  //int _component;
+  // int _component;
   Real _r_units;
   std::string _potential_units;
 
@@ -52,4 +39,4 @@ protected:
   Real _voltage_scaling;
 };
 
-#endif //EZ_H
+#endif // EZ_H
