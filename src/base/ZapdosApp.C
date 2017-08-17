@@ -65,6 +65,7 @@
 #include "SigmaMat.h"
 #include "JacMat.h"
 #include "Gas.h"
+#include "XenonGas.h"
 #include "Water.h"
 
 // Indicators
@@ -234,6 +235,7 @@ ZapdosApp::registerObjects(Factory & factory)
   registerMaterial(SigmaMat);
   registerMaterial(JacMat);
   registerMaterial(Gas);
+  registerMaterial(XenonGas);
   registerMaterial(Water);
 
   registerIndicator(AnalyticalDiffIndicator);

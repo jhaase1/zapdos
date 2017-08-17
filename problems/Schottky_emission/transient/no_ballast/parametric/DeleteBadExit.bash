@@ -7,9 +7,14 @@ file="CurrentCycle.log"
 for f in `ls */${file}` ; do
 	var2=$(tail -n 6 ${f} | md5sum)
 	
-	if [[ $var == $var2 ]] ; then
-		echo "deleting $(dirname ${f})"
-		rm -rf $(dirname ${f});
+	g=`dirname ${f}`
+	outputFile=`ls $g/$g.o*`
+	jobNumber=${outputFile#"$g/$g.o"}
+	jobResult=`qstat -j $jobNumber 2> /dev/null`
+	
+	if [[ $var == $var2 ]] && [[ ${#jobResult} -lt 50 ]] ; then
+		echo "deleting ${g}"
+		rm -rf ${g};
 #	else
 #		echo "not deleting $(dirname ${f})";
 	fi

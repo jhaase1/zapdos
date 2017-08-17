@@ -25,6 +25,7 @@ protected:
 	Real _use_moles;
 	Real _r_units;
 	Real _t_units;
+	std::string _potential_units;
 	Real _r;
 
 	// Coupled Variables
@@ -50,8 +51,6 @@ protected:
 	Real _a;
 	
 	RealVectorValue _ion_flux;
-	
-	std::string _potential_units;
 
 	// Unique variables
 	Real _voltage_scaling;

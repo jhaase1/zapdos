@@ -1,6 +1,7 @@
 gap = 4E-6 #m
 vhigh = 200E-3 #kV
 work_function = 4.00 # eV
+VLow = 1E-3 # kV (note: positive VLow produces positive work)
 cathode_temperature = 1273 # K
 
 tOn = 0.5E-9 #s
@@ -37,8 +38,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 [Mesh]
 	#MOOSE supports reading field data from ExodusII, XDA/XDR, and mesh checkpoint files (.e, .xda, .xdr, .cp)
 	file = PreviousCycle_out.e
-	#This method of restart is only supported on serial meshes	
-	distribution = serial
+	parallel_type = REPLICATED
 []
 
 [Problem]
@@ -127,6 +127,25 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #		electrode_area = ${area}
 #		ballast_resist = ${resistance}
 #	[../]
+[]
+
+[Postprocessors]
+	[./Full_EmissionCurrent]
+		type = SchottkyEmissionPostProcessor
+		boundary = left
+		#r = 1
+		variable = em
+		potential = potential
+		ip = Arp
+	[../]
+	[./Native_EmissionCurrent]
+		type = SchottkyEmissionPostProcessor
+		boundary = left
+		#r = 1
+		variable = em
+		potential = native_potential
+		ip = Arp
+	[../]
 []
 
 [Variables]
@@ -221,6 +240,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[./em_ionization]
 		type = ElectronsFromIonization
 		variable = em
+		em = em
 		potential = potential
 		mean_en = mean_en
 		block = 0
@@ -457,15 +477,17 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 
 	[./em_lin]
-		type = Density
+		type = Density #DensityMoles
 		variable = em_lin
 		density_log = em
+		#use_moles = false
 		block = 0
 	[../]
 	[./Arp_lin]
-		type = Density
+		type = Density #DensityMoles
 		variable = Arp_lin
 		density_log = Arp
+		#use_moles = false
 		block = 0
 	[../]
 
@@ -781,7 +803,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 
 	[./potential_bc_func]
 		type = SmoothedStepFunction
-		vLow = -0.001
+		vLow = ${* -1 ${VLow}}
 		vHigh = -${vhigh}
 		period = ${cyclePeriod}
 		duty = ${dutyCycle}
@@ -796,8 +818,9 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 []
 
 [Materials]
-	[./gas_block]
+	[./argon_gas_block]
 		type = Gas
+		enable = true
 		interp_trans_coeffs = true
 		interp_elastic_coeff = true
 		ramp_trans_coeffs = false
@@ -811,6 +834,25 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		user_Richardson_coefficient = 80E4
 		user_cathode_temperature = ${cathode_temperature} # K
 		property_tables_file = td_argon_mean_en.tsv
+		block = 0
+	[../]
+	
+	[./xenon_gas_block]
+		type = XenonGas
+		enable = false
+		interp_trans_coeffs = true
+		interp_elastic_coeff = true
+		ramp_trans_coeffs = false
+		em = em
+		potential = potential
+		ip = Arp
+		mean_en = mean_en
+		user_se_coeff = 0.02
+		user_work_function = ${work_function} # eV
+		user_field_enhancement = 55
+		user_Richardson_coefficient = 80E4
+		user_cathode_temperature = ${cathode_temperature} # K
+		property_tables_file = td_xenon_mean_en.tsv
 		block = 0
 	[../]
 

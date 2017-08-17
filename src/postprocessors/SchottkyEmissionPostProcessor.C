@@ -7,7 +7,7 @@ validParams<SchottkyEmissionPostProcessor>()
 {
   InputParameters params = validParams<SideIntegralVariablePostprocessor>();
 
-  params.addRequiredParam<Real>("r", "The reflection coefficient");
+  params.addParam<Real>("r", 0.0, "The reflection coefficient");
 
   params.addRequiredCoupledVar("potential", "The electric potential");
   params.addRequiredCoupledVar("ip", "The ion density.");
@@ -27,6 +27,7 @@ SchottkyEmissionPostProcessor::SchottkyEmissionPostProcessor(const InputParamete
     _use_moles(getParam<bool>("use_moles")),
     _r_units(1. / getParam<Real>("position_units")),
     _t_units(1. / getParam<Real>("time_units")),
+		_potential_units(getParam<std::string>("potential_units")),
     _r(getParam<Real>("r")),
 
     // Coupled Variables
@@ -64,7 +65,7 @@ SchottkyEmissionPostProcessor::SchottkyEmissionPostProcessor(const InputParamete
 Real
 SchottkyEmissionPostProcessor::computeQpIntegral()
 {
-  return ((1.0 - _r) / (1 + _r)) * SchottkyEmissionPostProcessor::emission_current();
+  return SchottkyEmissionPostProcessor::emission_current();
 }
 
 Real
@@ -77,12 +78,8 @@ SchottkyEmissionPostProcessor::emission_current()
   Real F;
 
   _a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
-  if (_a == 1.0)
-  {
-    return 0.0;
-  }
 
-  _ion_flux = (_sgnip[_qp] * _muip[_qp] * -_grad_potential[_qp] * std::exp(_ip[_qp]) -
+  _ion_flux = (1.0 - _a) * (_sgnip[_qp] * _muip[_qp] * -_grad_potential[_qp] * std::exp(_ip[_qp]) -
                _Dip[_qp] * std::exp(_ip[_qp]) * _grad_ip[_qp]) *
               (_use_moles ? _N_A[_qp] : 1);
 
@@ -90,14 +87,14 @@ SchottkyEmissionPostProcessor::emission_current()
   // je = AR * T^2 * exp(-(wf - dPhi) / (kB * T))
   // dPhi = _dPhi_over_F * sqrt(F) // eV
 
-  F = -_field_enhancement[_qp] * _normals[_qp] * _grad_potential[_qp] * _r_units * _voltage_scaling;
+  F = abs(-_field_enhancement[_qp] * _normals[_qp] * _grad_potential[_qp] * _r_units * _voltage_scaling);
 
-  dPhi = _dPhi_over_F * sqrt(F);
+  dPhi = ( 1.0 - 2.0 * _a  ) * _dPhi_over_F * sqrt(F);
 
   _j_TE = _Richardson_coefficient[_qp] * std::pow(_cathode_temperature[_qp], 2) *
           std::exp(-(_work_function[_qp] - dPhi) /
                    (kB * _cathode_temperature[_qp] + std::numeric_limits<double>::epsilon()));
   _j_SE = _e[_qp] * _se_coeff[_qp] * _ion_flux * _normals[_qp];
 
-  return (_t_units / _r_units) * (_j_TE + _j_SE) / (_use_moles ? _N_A[_qp] : 1);
+  return (_t_units / _r_units) * (_j_TE + _j_SE) ;
 }

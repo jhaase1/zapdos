@@ -18,7 +18,9 @@ public:
 protected:
   virtual Real computeValue();
 
+  bool _use_moles;
   bool _convert_moles;
+  bool _convert_units;
   const MaterialProperty<Real> & _N_A;
 };
 

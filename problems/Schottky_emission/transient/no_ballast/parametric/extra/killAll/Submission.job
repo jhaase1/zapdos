@@ -1,0 +1,10 @@
+#!/bin/bash
+#$ -N base
+#$ -M jhaase1@nd.edu
+#$ -m ae
+#$ -r y
+#$ -q *@@dgo
+
+killall -u jhaase1 -w -s SIGKILL zapdos-opt
+
+sleep 30

@@ -1,6 +1,6 @@
 #### import the simple module from the paraview
 from paraview.simple import *
-import glob, re, os
+import glob, re, os, numpy, csv
 
 def CreatePointSelection(ids):
   source = IDSelectionSource()
@@ -27,6 +27,7 @@ def selectElectrodeData(data, voi):
   return dataOverTimeTT
 
 path = os.getcwd() + "/"
+#path = "C:\\Users\\John\\Desktop\\"
 fileBase = "SteadyState_out"
 
 ## Define selection ##
@@ -80,29 +81,73 @@ from numpy import trapz
 for c, a, outTable in zip(inputs[0], inputs[1], output):
   time = c.RowData['Time']
   period = max(time) - min(time)
+  contactPot = abs(min( c.RowData['Voltage'] - a.RowData['Voltage'] ))
   
   j = abs(a.RowData['tot_gas_current'])
   plasmaPower = abs(j * ( c.RowData['Voltage'] - a.RowData['Voltage'] ))
+	suppliedPlasmaPower = abs(j *  ( abs( c.RowData['Voltage'] - a.RowData['Voltage'] ) - contactPot ) )
   EmitEnergy = c.RowData['Emission_energy_flux']
   
+	outTable.RowData.append(trapz(abs(j), x=time) / period, 'j')
   outTable.RowData.append(trapz(j**2, x=time) / period, 'j2')
+	
   outTable.RowData.append(trapz(EmitEnergy, x=time) / period, 'emit_energy')
+
   outTable.RowData.append(trapz(plasmaPower, x=time) / period, 'plasma_power')
+  outTable.RowData.append(trapz(suppliedPlasmaPower, x=time) / period, 'supplied_plasma_power')
   
   outTable.RowData.append(trapz( (j**2) / (EmitEnergy + plasmaPower), x=time) / period, 'electronic_efficiency')
 """
 
 PowerAndEfficiency.UpdatePipeline()
 
+fname = glob.glob(path + 'PowerAndEfficiency*.csv')
+for f in fname:
+  os.remove(f)
+
 writer = CreateWriter(path + 'PowerAndEfficiency.csv', PowerAndEfficiency, Precision=12, UseScientificNotation=1)
 writer.UpdatePipeline()
 
-#writer = CreateWriter(path + 'AnodeData.csv', anodeValuesOverTime3, Precision=12, UseScientificNotation=1)
-#writer.UpdatePipeline()
-#Delete(writer)
-#del writer
+fname = glob.glob(path + 'FieldData*.csv')
+for f in fname:
+  os.remove(f)
 
+writer = CreateWriter(path + 'FieldData.csv', reader, Precision=12, UseScientificNotation=1, FieldAssociation='Field Data')
+writer.UpdatePipeline()
 
+fname = glob.glob(path + 'FieldData*.csv')
+FieldData = numpy.genfromtxt(fname[0], delimiter=',').transpose()
+for f in fname:
+  os.remove(f)
+
+time = reader.TimestepValues
+
+FullEmission = numpy.delete(FieldData[0], 0)
+NativeEmission = numpy.delete(FieldData[1], 0)
+
+EmissionBenefit = numpy.trapz( FullEmission / NativeEmission , x=time) / (max(time) - min(time))
+cycles = max(time) / (max(time) - min(time))
+
+fname = glob.glob(path + 'PowerAndEfficiency*.csv')
+os.rename(fname[0] , path + 'PowerAndEfficiency.csv')
+
+with open(path + 'PowerAndEfficiency.csv', 'rb') as csvfile:
+    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    header = next(reader)
+    data = next(reader)
+
+header = [h.replace('"','') for h in header]
+header.extend(['emission_increase', 'cycles'])
+data.extend([str(EmissionBenefit), str(int(max(time)/(max(time)-min(time))))])
+
+with open(path + 'PowerAndEfficiency.csv', 'wb') as csvfile:
+	writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+	writer.writerow(header)
+	writer.writerow(data)
+
+with open(path + 'emission_increase.csv', 'wb') as csvfile:
+	writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
+	writer.writerow([EmissionBenefit])
 
 for f in GetSources().values():
     Delete(f)

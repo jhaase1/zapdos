@@ -33,7 +33,7 @@ protected:
   Function & _source_voltage;
   std::string _surface;
   Real _current_sign;
-  const ProvideMobility & _data;
+//  const ProvideMobility & _data;
   const std::vector<dof_id_type> & _var_dofs;
   unsigned int _em_id;
   const std::vector<dof_id_type> & _em_dofs;
@@ -42,6 +42,7 @@ protected:
   unsigned int _mean_en_id;
   const std::vector<dof_id_type> & _mean_en_dofs;
   Real _r_units;
+	Real _t_units;
   Real _resistance;
   Real _area;
   bool _use_area;
