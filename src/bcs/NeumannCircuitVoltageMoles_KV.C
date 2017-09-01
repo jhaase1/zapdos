@@ -17,11 +17,11 @@ validParams<NeumannCircuitVoltageMoles_KV>()
   params.addRequiredCoupledVar("em", "The log of the electron density.");
   params.addRequiredCoupledVar(
       "mean_en", "The log of the product of the mean energy and the electron density.");
-  params.addRequiredParam<std::string>("potential_units", "The potential units.");
   params.addRequiredParam<Real>("r",
                                 "The reflection coefficient applied to both electrons and ions");
-  params.addParam<Real>("position_units", 1, "The units of position.");
-  params.addParam<Real>("time_units", 1, "The units of time.");
+  params.addRequiredParam<Real>("position_units", "The units of position.");
+  params.addRequiredParam<Real>("time_units", "The units of time.");
+	params.addRequiredParam<std::string>("potential_units", "The units of potential.");
 
   return params;
 }

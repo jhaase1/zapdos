@@ -79,8 +79,8 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
 #	petsc_options_value = 'asm lu'
 
-	nl_rel_tol = 1E-8
-	nl_abs_tol = 1e-8
+	nl_rel_tol = 5E-9
+	nl_abs_tol = 5E-9
 
 	dtmin = ${/ 1e-14 ${time_units}}
 	dtmax = ${/ ${onTime} 50 }
