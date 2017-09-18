@@ -35,9 +35,9 @@ protected:
   const MaterialProperty<Real> & _e;
 
   Real _a;
-  Real _v_thermal;
-  Real _d_v_thermal_d_u;
-  Real _d_v_thermal_d_mean_en;
+	Real _electron_flux;
+  Real _d_electron_flux_d_u;
+	Real _v_thermal;
   Real _actual_mean_en;
 };
 

@@ -10,11 +10,11 @@ do
 	do
 		for tOn in $( seq 2 1 2 )
 		do
-			for tOff in 120 # $( seq 120 20 200 )
+			for tOff in $( seq 140 20 140 )
 			do
 				for d in $( seq 3 1 3 )
 				do
-					for VHigh in $( seq 22.0 0.1 22.5 ) 
+					for VHigh in $( seq 20.0 0.1 22.5 ) 
 					do
 						folder="${gas}_phi_${phi}_eV_tOn_${tOn}_ns_tOff_${tOff}_ns_d_${d}_um_VHigh_${VHigh}_V_VLow_${VLow}_V"
 						cp -rT ${oldFolder} ${folder}

@@ -79,15 +79,15 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
 #	petsc_options_value = 'asm lu'
 
-	nl_rel_tol = 5E-9
-	nl_abs_tol = 5E-9
+	nl_rel_tol = 1E-10
+	nl_abs_tol = 1E-10
 
-	dtmin = ${/ 1e-14 ${time_units}}
+	dtmin = ${/ 1e-16 ${time_units}}
 	dtmax = ${/ ${onTime} 50 }
 	nl_max_its = 40
 	[./TimeStepper]
 		type = IterationAdaptiveDT
-		dt = .004096
+		dt = 0.004096
 		cutback_factor = 0.8
 		growth_factor = 1.5
 		optimal_iterations = 25
@@ -159,15 +159,15 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 	[./em]
 		block = 0
-		initial_condition = -15
+		initial_condition = -10
 	[../]
 	[./Arp]
 		block = 0
-		initial_condition = -15
+		initial_condition = -10
 	[../]
 	[./mean_en]
 		block = 0
-		initial_condition = -14
+		initial_condition = -10
 	[../]
 []
 
@@ -465,17 +465,17 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 
 	[./em_lin]
-		type = Density #DensityMoles
+		type = DensityMoles
 		variable = em_lin
 		density_log = em
-		#use_moles = false
+		convert_units = true
 		block = 0
 	[../]
 	[./Arp_lin]
-		type = Density #DensityMoles
+		type = DensityMoles
 		variable = Arp_lin
 		density_log = Arp
-		#use_moles = false
+		convert_units = true
 		block = 0
 	[../]
 
@@ -683,7 +683,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 
 	[./em_physical_right]
-		type = HagelaarElectronAdvectionBC # HagelaarElectronBC
+		type = HagelaarElectronBC # HagelaarElectronAdvectionBC
 		variable = em
 		boundary = right
 		potential = potential
@@ -771,7 +771,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	[../]
 
 	[./mean_en_physical_right]
-		type = HagelaarEnergyAdvectionBC # HagelaarEnergyBC
+		type = HagelaarEnergyBC # HagelaarEnergyAdvectionBC
 		variable = mean_en
 		boundary = right
 		potential = potential

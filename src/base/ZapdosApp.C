@@ -95,6 +95,7 @@
 #include "SecondaryElectronBC.h"
 #include "FieldEmissionBC.h"
 #include "SchottkyEmissionBC.h"
+#include "SchottkyEmissionNewBC.h"
 
 #include "HagelaarIonAdvectionBC.h"
 #include "HagelaarIonDiffusionBC.h"
@@ -104,6 +105,7 @@
 #include "HagelaarEnergyBC.h"
 #include "HagelaarEnergyAdvectionBC.h"
 #include "SchottkyEmissionEnergyBC.h"
+#include "SchottkyEmissionEnergyNewBC.h"
 
 // Actions
 
@@ -256,12 +258,14 @@ ZapdosApp::registerObjects(Factory & factory)
   registerBoundaryCondition(SecondaryElectronBC);
   registerBoundaryCondition(FieldEmissionBC);
   registerBoundaryCondition(SchottkyEmissionBC);
+  registerBoundaryCondition(SchottkyEmissionNewBC);
   registerBoundaryCondition(HagelaarIonAdvectionBC);
   registerBoundaryCondition(HagelaarIonDiffusionBC);
   registerBoundaryCondition(HagelaarElectronBC);
   registerBoundaryCondition(HagelaarElectronAdvectionBC);
   registerBoundaryCondition(HagelaarEnergyBC);
   registerBoundaryCondition(SchottkyEmissionEnergyBC);
+	registerBoundaryCondition(SchottkyEmissionEnergyNewBC);
   registerBoundaryCondition(HagelaarEnergyAdvectionBC);
   registerBoundaryCondition(NeumannCircuitVoltageMoles_KV);
   registerBoundaryCondition(NeumannCircuitVoltageNew);

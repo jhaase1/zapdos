@@ -4,26 +4,26 @@ oldFolder="base"
 
 gas="Ar"
 
-for VOut in $( seq -1 0.1 3 )
+for VLow in $( seq 0 0.2 0 )
 do
 	for phi in $( seq 2.5 0.5 2.5 )
 	do
 		for tOn in $( seq 2 1 2 )
 		do
-			for tOff in $( seq 100 20 100 )
+			for tOff in $( seq 100 25 250 )
 			do
-				for d in $( seq 10 1 10 )
+				for d in $( seq 3 1 3 )
 				do
-					for VPlasma in $( seq 40 -1 40 )
+					for VHigh in $( seq 18.0 0.1 23.0 ) 
 					do
-						folder="${gas}_phi_${phi}_eV_tOn_${tOn}_ns_tOff_${tOff}_ns_d_${d}_um_VPlasma_${VPlasma}_V_VOut_${VOut}_V"
+						folder="${gas}_phi_${phi}_eV_tOn_${tOn}_ns_tOff_${tOff}_ns_d_${d}_um_VHigh_${VHigh}_V_VLow_${VLow}_V"
 						cp -rT ${oldFolder} ${folder}
 						cd ${folder}
-							sed -i 's?VOut = 1E-3?VOut = '${VOut}'E-3?g' "Initial.i" ;
-							sed -i 's?VOut = 1E-3?VOut = '${VOut}'E-3?g' "SteadyState.i" ;
+							sed -i 's?VLow = 1E-3?VLow = '${VLow}'E-3?g' "Initial.i" ;
+							sed -i 's?VLow = 1E-3?VLow = '${VLow}'E-3?g' "SteadyState.i" ;
 						
-							sed -i 's?vhigh = 200E-3?vhigh = '${VPlasma}'E-3?g' "Initial.i" ;
-							sed -i 's?vhigh = 200E-3?vhigh = '${VPlasma}'E-3?g' "SteadyState.i" ;
+							sed -i 's?vhigh = 200E-3?vhigh = '${VHigh}'E-3?g' "Initial.i" ;
+							sed -i 's?vhigh = 200E-3?vhigh = '${VHigh}'E-3?g' "SteadyState.i" ;
 							
 							sed -i 's?gap = 4E-6?gap = '${d}'E-6?g' "Initial.i" ;
 							sed -i 's?gap = 4E-6?gap = '${d}'E-6?g' "SteadyState.i" ;

@@ -15,7 +15,7 @@ else
 	cCycles=0;
 fi
 
-transientCycles=10
+transientCycles=5
 echo "${transientCycles}" > transientCycles.csv
 
 limit="5E-5"
