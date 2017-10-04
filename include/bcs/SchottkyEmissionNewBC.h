@@ -43,6 +43,7 @@ protected:
   const MaterialProperty<Real> & _e;
   const MaterialProperty<Real> & _eps;
   const MaterialProperty<Real> & _N_A;
+//	const MaterialProperty<Real> & _k_boltz;
 
   const MaterialProperty<Real> & _se_energy;
 
@@ -62,6 +63,7 @@ protected:
   // Unique variables
   Real _voltage_scaling;
   Real _dPhi_over_F;
+	Real kB;
 
   // System variables
   Real _relaxation_expr;

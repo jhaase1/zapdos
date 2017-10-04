@@ -51,5 +51,5 @@ ProcRate::computeValue()
 
   _current *= (_t_units / _r_units);
 
-  return _alpha[_qp] * _current.norm();
+  return ( _alpha[_qp] * _r_units ) * _current.norm();
 }

@@ -40,6 +40,7 @@
 #include "JouleHeating.h"
 #include "ElectronTimeDerivative.h"
 #include "SetValue.h"
+#include "SetEqualToLogSum.h"
 #include "SetRHS.h"
 
 // AuxKernels
@@ -51,6 +52,7 @@
 #include "TM0CylindricalEzAux.h"
 #include "AbsValueAux.h"
 #include "ProcRate.h"
+#include "Alpha.h"
 #include "PowerDep.h"
 #include "Current.h"
 #include "EFieldAdvAux.h"
@@ -214,6 +216,7 @@ ZapdosApp::registerObjects(Factory & factory)
   registerKernel(ProductFirstOrderRxn);
   registerKernel(ProductAABBRxn);
   registerKernel(SetValue);
+	registerKernel(SetEqualToLogSum);
   registerKernel(SetRHS);
 
   registerAux(Sigma);
@@ -225,6 +228,7 @@ ZapdosApp::registerObjects(Factory & factory)
   registerAux(Current);
   registerAux(PowerDep);
   registerAux(ProcRate);
+	registerAux(Alpha);
   registerAux(TotalFlux);
   registerAux(Position);
   registerAux(Efield);

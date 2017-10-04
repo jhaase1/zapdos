@@ -220,14 +220,16 @@ Gas::computeQpProperties()
   _massem[_qp] = 9.11e-31;
   _massGas[_qp] = 40.0 * 1.66e-27;
   _massArp[_qp] = 40.0 * 1.66e-27;
+	
+	_e[_qp] = 1.60217662E-19;
+  _eps[_qp] = 8.85418782E-12;
+	_k_boltz[_qp] = 1.38064852E-23;
+  _N_A[_qp] = 6.0221409E23;
+	
   _T_gas[_qp] = _user_T_gas;
   _p_gas[_qp] = _user_p_gas;
-  _k_boltz[_qp] = 1.38e-23;
-  _Avogadro[_qp] = 6.0221409E23;
-  if (_use_moles)
-    _n_gas[_qp] = _p_gas[_qp] / (8.3145 * _T_gas[_qp]);
-  else
-    _n_gas[_qp] = _p_gas[_qp] / (_k_boltz[_qp] * _T_gas[_qp]);
+  
+	_n_gas[_qp] = _p_gas[_qp] / (_k_boltz[_qp] * _T_gas[_qp]) * ( _use_moles ? _N_A[_qp] : 1.0 );
 
   _se_coeff[_qp] = _user_se_coeff;
   _work_function[_qp] = _user_work_function;
@@ -238,14 +240,13 @@ Gas::computeQpProperties()
 
   _se_energy[_qp] = 2. * 3. / 2.; // Emi uses 2 Volts coming off the wall (presumably for Te).
                                   // Multiply by 3/2 to get mean_en
-  _e[_qp] = 1.60217662E-19;
-  _eps[_qp] = 8.85418782E-12;
+
   _sgnem[_qp] = -1.;
   _sgnmean_en[_qp] = -1.;
   _sgnArp[_qp] = 1.;
   _diffpotential[_qp] = _eps[_qp];
 
-  _TArp[_qp] = 300;
+  _TArp[_qp] = _user_T_gas;
 
   // With the exception of temperature/energy (generally in eV), all properties are in standard SI
   // units unless otherwise indicated
@@ -352,7 +353,6 @@ Gas::computeQpProperties()
   _el_coeff_energy_b[_qp] = 3.17917979e-1;
   _el_coeff_energy_c[_qp] = 4.66301096;
 
-  _N_A[_qp] = 6.02e23;
   _Ar[_qp] = 1.01e5 / (300 * 1.38e-23);
   _Eiz[_qp] = 15.76;
   _Eex[_qp] = 11.5;
