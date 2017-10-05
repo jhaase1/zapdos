@@ -36,10 +36,6 @@ protected:
 
   const VariableValue & _mean_en;
   unsigned int _mean_en_id;
-  MooseVariable & _ip_var;
-  const VariableValue & _ip;
-  const VariableGradient & _grad_ip;
-  unsigned int _ip_id;
 
   const MaterialProperty<Real> & _muem;
   const MaterialProperty<Real> & _d_muem_d_actual_mean_en;
@@ -47,23 +43,16 @@ protected:
   const MaterialProperty<Real> & _e;
   const MaterialProperty<Real> & _eps;
   const MaterialProperty<Real> & _N_A;
-  const MaterialProperty<Real> & _sgnip;
-  const MaterialProperty<Real> & _muip;
-  const MaterialProperty<Real> & _Dip;
-  const MaterialProperty<Real> & _se_coeff;
+//	const MaterialProperty<Real> & _k_boltz;
+
   const MaterialProperty<Real> & _se_energy;
 
-  const MaterialProperty<Real> & _work_function;
-  const MaterialProperty<Real> & _field_enhancement;
-  const MaterialProperty<Real> & _Richardson_coefficient;
-  const MaterialProperty<Real> & _cathode_temperature;
+  Real _work_function;
+  Real _field_enhancement;
+  Real _Richardson_coefficient;
+  Real _temperature;
 
   Real _a;
-
-  RealVectorValue _ion_flux;
-
-  RealVectorValue _d_ion_flux_d_potential;
-  RealVectorValue _d_ion_flux_d_ip;
 
   Real _actual_mean_en;
   Real _tau;
@@ -74,6 +63,7 @@ protected:
   // Unique variables
   Real _voltage_scaling;
   Real _dPhi_over_F;
+	Real kB;
 
   // System variables
   Real _relaxation_expr;
@@ -88,13 +78,6 @@ protected:
   Real _d_emission_flux_d_u;
 
   Real _n_emitted;
-  Real _d_n_emitted_d_u;
-
-  Real _n_e_transported;
-  Real _d_n_e_transported_d_u;
-
-  Real _n_transported;
-  Real _d_n_transported_d_u;
 };
 
 #endif // SCHOTTKYEMISSIONBC_H

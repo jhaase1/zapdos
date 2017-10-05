@@ -48,6 +48,7 @@
 #include "DriftDiffusionFluxAux.h"
 #include "UserFlux.h"
 #include "DensityMoles.h"
+#include "InverseDensity.h"
 #include "TM0CylindricalErAux.h"
 #include "TM0CylindricalEzAux.h"
 #include "AbsValueAux.h"
@@ -223,6 +224,7 @@ ZapdosApp::registerObjects(Factory & factory)
   registerAux(DriftDiffusionFluxAux);
   registerAux(AbsValueAux);
   registerAux(DensityMoles);
+  registerAux(InverseDensity);
   registerAux(TM0CylindricalEzAux);
   registerAux(TM0CylindricalErAux);
   registerAux(Current);

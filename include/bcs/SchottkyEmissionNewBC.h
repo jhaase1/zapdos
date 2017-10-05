@@ -34,6 +34,9 @@ protected:
   const VariableGradient & _grad_potential;
   unsigned int _potential_id;
 
+	const VariableValue & _em;
+	unsigned int _em_id;
+	
   const VariableValue & _mean_en;
   unsigned int _mean_en_id;
 

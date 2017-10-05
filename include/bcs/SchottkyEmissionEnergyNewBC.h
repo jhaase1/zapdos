@@ -18,8 +18,8 @@ protected:
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
 	
-  unsigned int _em_id;
-  const VariableValue & _em;
+  unsigned int _em_emitted_id;
+  const VariableValue & _em_emitted;
 };
 
 #endif /* SCHOTTKYEMISSIONENERGYNEWBC_H */

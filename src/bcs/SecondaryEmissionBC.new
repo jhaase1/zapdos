@@ -1,0 +1,148 @@
+#include "SecondaryEmissionBC.h"
+
+// MOOSE includes
+#include "MooseVariable.h"
+
+template <>
+InputParameters
+validParams<SecondaryEmissionBC>()
+{
+  InputParameters params = validParams<IntegratedBC>();
+  params.addRequiredParam<Real>("r", "The reflection coefficient");
+  params.addRequiredCoupledVar("potential", "The electric potential");
+  params.addRequiredCoupledVar("mean_en", "The mean energy.");
+  params.addRequiredCoupledVar("ip", "The ion density.");
+  params.addParam<Real>("position_units", 1.0, "Units of position.");
+  params.addParam<Real>("time_units", 1.0, "Units of time.");
+  return params;
+}
+
+SecondaryEmissionBC::SecondaryEmissionBC(const InputParameters & parameters)
+  : IntegratedBC(parameters),
+
+    _r_units(1. / getParam<Real>("position_units")),
+    _t_units(1. / getParam<Real>("time_units")),
+    _r(getParam<Real>("r")),
+
+    // Coupled Variables
+    _grad_potential(coupledGradient("potential")),
+    _potential_id(coupled("potential")),
+    _mean_en(coupledValue("mean_en")),
+    _mean_en_id(coupled("mean_en")),
+    _ip_var(*getVar("ip", 0)),
+    _ip(coupledValue("ip")),
+    _grad_ip(coupledGradient("ip")),
+    _ip_id(coupled("ip")),
+
+    _muem(getMaterialProperty<Real>("muem")),
+    _d_muem_d_actual_mean_en(getMaterialProperty<Real>("d_muem_d_actual_mean_en")),
+    _massem(getMaterialProperty<Real>("massem")),
+    _e(getMaterialProperty<Real>("e")),
+    _sgnip(getMaterialProperty<Real>("sgn" + _ip_var.name())),
+    _muip(getMaterialProperty<Real>("mu" + _ip_var.name())),
+    _Dip(getMaterialProperty<Real>("diff" + _ip_var.name())),
+    _se_coeff(getMaterialProperty<Real>("se_coeff")),
+    _a(0.5),
+    _v_thermal(0.0),
+    _electron_flux(0.0),
+    _n_gamma(0),
+		
+    _d_electron_flux_d_u(0.0),
+    _d_n_gamma_d_u(0.0),
+    _actual_mean_en(0)
+{
+}
+
+Real
+SecondaryEmissionBC::computeQpResidual()
+{
+	_a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
+
+  _actual_mean_en = std::exp(_mean_en[_qp] - _u[_qp]);
+	
+	_v_thermal = (_r_units / _t_units) *
+      std::sqrt(8.0 * _e[_qp] * 2.0 / 3.0 * _actual_mean_en / (M_PI * _massem[_qp]));
+
+  _electron_flux = (1.0 - _a) * _se_coeff[_qp] * _sgnip[_qp] * _muip[_qp] * -_grad_potential[_qp] * std::exp(_ip[_qp]) -
+              _Dip[_qp] * std::exp(_ip[_qp]) * _grad_ip[_qp] * _normals[_qp];
+							
+	_n_gamma = _electron_flux / (_muem[_qp] * -_grad_potential[_qp] * _normals[_qp]);
+
+  return _test[_i][_qp] * (
+						-(1.0 - _r) / (1.0 + _r) * _v_thermal * _n_gamma +
+						-2.0 / (1.0 + _r) * _electron_flux
+						);
+}
+
+Real
+SecondaryEmissionBC::computeQpJacobian()
+{
+  return 0.;
+}
+
+Real
+SecondaryEmissionBC::computeQpOffDiagJacobian(unsigned int jvar)
+{
+	_a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
+
+  _actual_mean_en = std::exp(_mean_en[_qp] - _u[_qp]);
+	
+	_v_thermal = (_r_units / _t_units) *
+      std::sqrt(8.0 * _e[_qp] * 2.0 / 3.0 * _actual_mean_en / (M_PI * _massem[_qp]));
+
+  _electron_flux = (1.0 - _a) * _se_coeff[_qp] * _sgnip[_qp] * _muip[_qp] * -_grad_potential[_qp] * std::exp(_ip[_qp]) -
+              _Dip[_qp] * std::exp(_ip[_qp]) * _grad_ip[_qp] * _normals[_qp];
+							
+	_n_gamma = _electron_flux / (_muem[_qp] * -_grad_potential[_qp] * _normals[_qp]);
+
+  if (jvar == _potential_id)
+  {
+    _d_electron_flux_d_u = (1.0 - _a) * _se_coeff[_qp] * _sgnip[_qp] * _muip[_qp] * -_grad_phi[_j][_qp] * std::exp(_ip[_qp]);
+		
+		_d_n_gamma_d_u = (
+												_d_electron_flux_d_u * (_muem[_qp] * -_grad_potential[_qp] * _normals[_qp]) -
+												  _electron_flux     * (_muem[_qp] * -_grad_phi[_j][_qp]   * _normals[_qp])
+											) / (
+											std::pow((_muem[_qp] * -_grad_potential[_qp] * _normals[_qp]) , 2)
+											);
+		
+		return _test[_i][_qp] * (
+							-(1.0 - _r) / (1.0 + _r) *   _v_thermal     * _d_n_gamma_d_u +
+							-2.0        / (1.0 + _r) * _d_electron_flux_d_u
+							);
+						
+  }
+
+  else if (jvar == _mean_en_id)
+  {
+		
+		_d_n_gamma_d_u = -_electron_flux * (
+						_d_muem_d_actual_mean_en[_qp] * _actual_mean_en * -_grad_potential[_qp] * _normals[_qp] * _phi[_j][_qp]
+						) / (
+						std::pow( _muem[_qp] * -_grad_potential[_qp] * _normals[_qp] , 2 )
+						);
+
+		return _test[_i][_qp] * (
+							-(1.0 - _r) / (1.0 + _r) * _v_thermal * _d_n_gamma_d_u +
+							-(1.0 - _r) / (1.0 + _r) * 0.5 * _v_thermal * _phi[_j][_qp] * _n_gamma
+							);
+  }
+
+  else if (jvar == _ip_id)
+  {
+    _d_electron_flux_d_u = (1.0 - _a) * _se_coeff[_qp] * (
+					_sgnip[_qp] * _muip[_qp] * -_grad_potential[_qp] * std::exp(_ip[_qp]) * _phi[_j][_qp] -
+					_Dip[_qp] * std::exp(_ip[_qp]) * _grad_phi[_j][_qp] -
+					_Dip[_qp] * std::exp(_ip[_qp]) * _phi[_j][_qp] * _grad_ip[_qp]
+					);
+					
+		_d_n_gamma_d_u = _d_electron_flux_d_u / (_muem[_qp] * -_grad_potential[_qp] * _normals[_qp]);
+
+		return _test[_i][_qp] * (
+							-(1.0 - _r) / (1.0 + _r) * _v_thermal * _d_n_gamma_d_u +
+							-2.0 / (1.0 + _r) * _d_electron_flux_d_u
+							);
+  } else {
+    return 0.0;
+	}
+}

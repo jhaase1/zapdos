@@ -17,8 +17,7 @@ protected:
   virtual Real computeQpResidual();
   virtual Real computeQpJacobian();
   virtual Real computeQpOffDiagJacobian(unsigned int jvar);
-
-  // Variables
+	
   unsigned int _em_id;
   const VariableValue & _em;
 };
