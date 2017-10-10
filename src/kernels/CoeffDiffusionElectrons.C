@@ -7,6 +7,7 @@ validParams<CoeffDiffusionElectrons>()
   InputParameters params = validParams<Kernel>();
   params.addRequiredCoupledVar("mean_en",
                                "The log of the product of mean energy times electron density.");
+	params.addRequiredCoupledVar("em", "The log of the total electron density.");
   params.addRequiredParam<Real>("position_units", "Units of position");
   return params;
 }
@@ -23,6 +24,8 @@ CoeffDiffusionElectrons::CoeffDiffusionElectrons(const InputParameters & paramet
 
     _mean_en(coupledValue("mean_en")),
     _mean_en_id(coupled("mean_en")),
+		
+		_em(coupledValue("em")),
 
     _d_diffem_d_u(0),
     _d_diffem_d_mean_en(0)
@@ -41,7 +44,7 @@ Real
 CoeffDiffusionElectrons::computeQpJacobian()
 {
   _d_diffem_d_u =
-      _d_diffem_d_actual_mean_en[_qp] * std::exp(_mean_en[_qp] - _u[_qp]) * -_phi[_j][_qp];
+      _d_diffem_d_actual_mean_en[_qp] * std::exp(_mean_en[_qp] - _em[_qp]) * -_phi[_j][_qp];
 
   return -_diffem[_qp] * (std::exp(_u[_qp]) * _grad_phi[_j][_qp] +
                           std::exp(_u[_qp]) * _phi[_j][_qp] * _grad_u[_qp]) *
@@ -55,7 +58,7 @@ CoeffDiffusionElectrons::computeQpOffDiagJacobian(unsigned int jvar)
   if (jvar == _mean_en_id)
   {
     _d_diffem_d_mean_en =
-        _d_diffem_d_actual_mean_en[_qp] * std::exp(_mean_en[_qp] - _u[_qp]) * _phi[_j][_qp];
+        _d_diffem_d_actual_mean_en[_qp] * std::exp(_mean_en[_qp] - _em[_qp]) * _phi[_j][_qp];
 
     return -_d_diffem_d_mean_en * std::exp(_u[_qp]) * _grad_u[_qp] * -_grad_test[_i][_qp];
   }

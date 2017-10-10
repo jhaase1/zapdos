@@ -12,7 +12,7 @@
 	type = GeneratedMesh	# Can generate simple lines, rectangles and rectangular prisms
 	dim = 1								# Dimension of the mesh
 	nx = 2000							# Number of elements in the x direction
-	xmax = 4				# Length of test chamber
+	xmax = 10				# Length of test chamber
 []
 
 [Problem]
@@ -36,7 +36,7 @@
 	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
 	petsc_options_value = 'lu superlu_dist'
 
-	nl_rel_tol = 1E-10
+	nl_rel_tol = 1E-6
 	nl_abs_tol = 1E-10
 
 	dtmin = 1E-5
@@ -159,12 +159,14 @@
 		variable = em_emitted
 		potential = potential
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
 	[./em_emitted_diffusion]
 		type = CoeffDiffusionElectrons
 		variable = em_emitted
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
 	
@@ -179,12 +181,14 @@
 		variable = em_generated
 		potential = potential
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
 	[./em_generated_diffusion]
 		type = CoeffDiffusionElectrons
 		variable = em_generated
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
 	[./em_generated_ionization]
@@ -909,7 +913,7 @@
 
 	[./potential_ic_func]
 		type = ParsedFunction
-		value = '-10E-3 * (4 - x) / 4'
+		value = '-10E-3 * (10 - x) / 10'
 	[../]
 
 []

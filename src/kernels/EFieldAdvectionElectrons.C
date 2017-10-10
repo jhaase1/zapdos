@@ -8,6 +8,7 @@ validParams<EFieldAdvectionElectrons>()
   params.addRequiredCoupledVar(
       "potential", "The gradient of the potential will be used to compute the advection velocity.");
   params.addRequiredCoupledVar("mean_en", "The log of the mean energy.");
+	params.addRequiredCoupledVar("em", "The log of the total electron density.");
   params.addRequiredParam<Real>("position_units", "The units of position.");
   return params;
 }
@@ -27,6 +28,8 @@ EFieldAdvectionElectrons::EFieldAdvectionElectrons(const InputParameters & param
     _grad_potential(coupledGradient("potential")),
     _mean_en(coupledValue("mean_en")),
     _mean_en_id(coupled("mean_en")),
+		
+    _em(coupledValue("em")),
 
     _d_actual_mean_en_d_mean_en(0),
     _d_muem_d_mean_en(0),
@@ -44,7 +47,7 @@ EFieldAdvectionElectrons::computeQpResidual()
 Real
 EFieldAdvectionElectrons::computeQpJacobian()
 {
-  _d_actual_mean_en_d_u = std::exp(_mean_en[_qp] - _u[_qp]) * -_phi[_j][_qp];
+  _d_actual_mean_en_d_u = std::exp(_mean_en[_qp] - _em[_qp]) * -_phi[_j][_qp];
   _d_muem_d_u = _d_muem_d_actual_mean_en[_qp] * _d_actual_mean_en_d_u;
 
   return (_d_muem_d_u * _sign[_qp] * std::exp(_u[_qp]) * -_grad_potential[_qp] +
@@ -62,7 +65,7 @@ EFieldAdvectionElectrons::computeQpOffDiagJacobian(unsigned int jvar)
 
   if (jvar == _mean_en_id)
   {
-    _d_actual_mean_en_d_mean_en = std::exp(_mean_en[_qp] - _u[_qp]) * _phi[_j][_qp];
+    _d_actual_mean_en_d_mean_en = std::exp(_mean_en[_qp] - _em[_qp]) * _phi[_j][_qp];
     _d_muem_d_mean_en = _d_muem_d_actual_mean_en[_qp] * _d_actual_mean_en_d_mean_en;
 
     return _d_muem_d_mean_en * _sign[_qp] * std::exp(_u[_qp]) * -_grad_potential[_qp] *

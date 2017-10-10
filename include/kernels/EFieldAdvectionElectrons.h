@@ -32,6 +32,8 @@ private:
   const VariableGradient & _grad_potential;
   const VariableValue & _mean_en;
   unsigned int _mean_en_id;
+	
+	const VariableValue & _em;
 
   Real _d_actual_mean_en_d_mean_en;
   Real _d_muem_d_mean_en;

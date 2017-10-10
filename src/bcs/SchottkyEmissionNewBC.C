@@ -107,13 +107,10 @@ SchottkyEmissionNewBC::computeQpResidual()
   _v_thermal = (_r_units / _t_units) *
       std::sqrt(8.0 * _e[_qp] * 2.0 / 3.0 * _actual_mean_en / (M_PI * _massem[_qp]));
 			
-  _v_drift = _muem[_qp] * -_grad_potential[_qp] * _normals[_qp];
-
   _emission_flux = _relaxation_expr * (SchottkyEmissionNewBC::emission_flux());
 
   return _test[_i][_qp] *
          (
-				 ((1.0 - _r) / (1 + _r)) * 0.5 * _v_thermal * _u[_qp] + // Minus a minus is a plus
           (1.0 - _a) * _emission_flux
 					);
 }
@@ -130,18 +127,9 @@ SchottkyEmissionNewBC::computeQpJacobian()
   _v_thermal = (_r_units / _t_units) *
       std::sqrt(8.0 * _e[_qp] * 2.0 / 3.0 * _actual_mean_en / (M_PI * _massem[_qp]));
 			
-  _v_drift = _muem[_qp] * -_grad_potential[_qp] * _normals[_qp];
-
   _emission_flux = _relaxation_expr * (SchottkyEmissionNewBC::emission_flux());
 	
-  return _test[_i][_qp] *
-					(1.0 - _r) / (1 + _r) * _v_thermal * _u[_qp] *
-					(
-					_muem[_qp] +
-					-2.0 * _d_muem_d_actual_mean_en[_qp] * std::pow( _actual_mean_en , 2 )
-					) / (
-					4.0 * _muem[_qp]
-					) * _phi[_j][_qp];
+  return 0;
 }
 
 Real
@@ -156,30 +144,20 @@ SchottkyEmissionNewBC::computeQpOffDiagJacobian(unsigned int jvar)
   _v_thermal = (_r_units / _t_units) *
       std::sqrt(8.0 * _e[_qp] * 2.0 / 3.0 * _actual_mean_en / (M_PI * _massem[_qp]));
 			
-  _v_drift = _muem[_qp] * -_grad_potential[_qp] * _normals[_qp];
-
   _emission_flux = _relaxation_expr * (SchottkyEmissionNewBC::emission_flux());
 	
 	if (jvar == _mean_en_id)
   {
-  return _test[_i][_qp] * _phi[_j][_qp] *
-					(1.0 - _r) / (1 + _r) * _v_thermal * _u[_qp] *
-					(
-					-_muem[_qp] +
-					2.0 * _d_muem_d_actual_mean_en[_qp] * std::pow( _actual_mean_en , 2 )
-					) / (
-					4.0 * _muem[_qp] +  + std::numeric_limits<double>::epsilon()
-					);
+  return 0;
 		
   }
   else if (jvar == _potential_id)
   {
     _d_emission_flux_d_u = SchottkyEmissionNewBC::d_emission_flux_d_potential();
 		
-		return _test[_i][_qp] * (
-						(1.0 - _r) / (1 + _r) * _v_thermal * _u[_qp] / (2.0 * _grad_potential[_qp] * _normals[_qp] + std::numeric_limits<double>::epsilon()) * (_grad_phi[_j][_qp] * _normals[_qp]) +
-						(1.0 - _r) / (1 + _r) * _v_thermal * _u[_qp] * _d_emission_flux_d_u / (2.0 * _emission_flux + std::numeric_limits<double>::epsilon()) * (_grad_phi[_j][_qp] * _normals[_qp]) +
-						-(1.0 - _a) * SchottkyEmissionNewBC::d_emission_flux_d_potential() * (_grad_phi[_j][_qp] * _normals[_qp])
+		return _test[_i][_qp] *
+					 (
+						(1.0 - _a) * _d_emission_flux_d_u
 						);
   }
   else
@@ -204,13 +182,13 @@ SchottkyEmissionNewBC::emission_flux()
 
   F = -_field_enhancement * _normals[_qp] * _grad_potential[_qp] * _r_units * _voltage_scaling;
 
-  dPhi = ((F > 0.0) - (F < 0.0)) * _dPhi_over_F * sqrt(std::abs(F));
+  dPhi = (1.0 - 2.0 * _a) * _dPhi_over_F * sqrt(std::abs(F));
 
   _j_TE = _Richardson_coefficient * std::pow(_temperature, 2) *
           std::exp(-(_work_function - dPhi) /
                    (kB * _temperature + std::numeric_limits<double>::epsilon()));
 
-  return (_r_units / _t_units) * _j_TE / (-_e[_qp] * (_use_moles ? _N_A[_qp] : 1.0));
+  return (_r_units / _t_units) * _j_TE / (-_e[_qp] * (_use_moles ? _N_A[_qp] : 1.0)) * -( _normals[_qp](0) + _normals[_qp](1) + _normals[_qp](2) );
 }
 
 Real
@@ -230,7 +208,7 @@ SchottkyEmissionNewBC::d_emission_flux_d_potential()
 
   F = -_field_enhancement * _normals[_qp] * _grad_potential[_qp];
 
-	dPhi = ((F > 0.0) - (F < 0.0)) * _dPhi_over_F * sqrt(std::abs(F));
+	dPhi = (1.0 - 2.0 * _a) * _dPhi_over_F * sqrt(std::abs(F));
 
   _j_TE = _Richardson_coefficient * std::pow(_temperature, 2) *
           exp(-(_work_function - dPhi) /
@@ -241,7 +219,7 @@ SchottkyEmissionNewBC::d_emission_flux_d_potential()
       (dPhi / (2 * kB * _temperature + std::numeric_limits<double>::epsilon())) /
       (_grad_potential[_qp] * _normals[_qp] + std::numeric_limits<double>::epsilon());
 
-  return (_r_units / _t_units) * _d_j_TE_d_potential / (-_e[_qp] * (_use_moles ? _N_A[_qp] : 1.0));
+  return (_r_units / _t_units) * _d_j_TE_d_potential / (-_e[_qp] * (_use_moles ? _N_A[_qp] : 1.0)) * -( _normals[_qp](0) + _normals[_qp](1) + _normals[_qp](2) );
 }
 
 Real
