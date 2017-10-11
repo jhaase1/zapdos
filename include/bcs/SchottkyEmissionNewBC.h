@@ -34,12 +34,12 @@ protected:
   const VariableGradient & _grad_potential;
   unsigned int _potential_id;
 
-	const VariableValue & _em;
-	unsigned int _em_id;
-	
   const VariableValue & _mean_en;
   unsigned int _mean_en_id;
 
+	const VariableValue & _em;
+	unsigned int _em_id;
+	
   const MaterialProperty<Real> & _muem;
   const MaterialProperty<Real> & _d_muem_d_actual_mean_en;
   const MaterialProperty<Real> & _massem;

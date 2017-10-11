@@ -37,6 +37,7 @@ do
 							sed -i 's?work_function = 4.00?work_function = '${phi}'?g' "Initial.i" ;
 							sed -i 's?work_function = 4.00?work_function = '${phi}'?g' "SteadyState.i" ;
 							
+							sed -i "s?-N ${oldFolder}?-N ${folder}?g" "Submission.job" ;
 							sed -i "s?-N ${oldFolder}?-N ${folder}?g" "DoNotDeflate.job" ;
 							
 							qsub DoNotDeflate.job

@@ -9,6 +9,7 @@ dom1Scale=1e-7
   potential_units = kV
   use_moles = true
   # potential_units = V
+	time_units = 1
 []
 
 [Mesh]
