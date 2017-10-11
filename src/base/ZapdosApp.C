@@ -17,6 +17,7 @@
 #include "CoeffDiffusionElectrons.h"
 #include "CoeffDiffusionEnergy.h"
 #include "EFieldAdvectionElectrons.h"
+#include "EFieldAdvectionSubTypeElectrons.h"
 #include "DriftDiffusion.h"
 #include "DriftDiffusionUser.h"
 #include "DriftDiffusionElectrons.h"
@@ -193,6 +194,7 @@ ZapdosApp::registerObjects(Factory & factory)
   registerKernel(CoeffDiffusionElectrons);
   registerKernel(CoeffDiffusionEnergy);
   registerKernel(EFieldAdvectionElectrons);
+	registerKernel(EFieldAdvectionSubTypeElectrons);
   registerKernel(EFieldAdvectionEnergy);
   registerKernel(DriftDiffusion);
   registerKernel(DriftDiffusionUser);

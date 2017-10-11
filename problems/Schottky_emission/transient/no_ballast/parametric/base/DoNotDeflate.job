@@ -8,17 +8,26 @@
 
 # Initialize variables
 restart=true
+transientCycles=5
+initalCycles=2
+limit="5E-5"
 
 if [ -f TotalRelNorm.csv ] && [ "$restart" == "true" ]; then
 	printf -v cCycles %.0f "$( cat TotalRelNorm.csv | cut -d, -f1 )";
+	
+	if ! [ -f SteadyState_out.e ]; then
+		for f in `ls PreviousCycle* -d | grep -v '\.i'` ; do 
+			mv $f $(echo "$f" | sed 's/PreviousCycle/SteadyState/g') ;
+		done
+		
+		mv PreviousCycle.log CurrentCycle.log
+	fi
+	
 else
 	cCycles=0;
 fi
 
-transientCycles=5
 echo "${transientCycles}" > transientCycles.csv
-
-limit="5E-5"
 echo "${limit}" > limit.csv
 
 limit=`echo ${limit} | sed -e 's/[eE]+*/\*10\^/'`
@@ -52,7 +61,28 @@ while [ `echo $norm2'<'$limit | bc -l` -eq 0 ]; do
 	
 	if [ ${cCycles} -eq 0 ]
 	then
-		eval "${cmd} Initial.i completedCycles=${cCycles} desiredCycles=${dCycles} ${options} ${post}" || { exit 56 ; }
+		failed=true
+		for ic in `seq -35 5 0` ; do
+			icStatement="Variables/em/initial_condition=${ic} Variables/Arp/initial_condition=${ic} Variables/mean_en/initial_condition=${ic}"
+			
+			eval "${cmd} Initial.i completedCycles=${cCycles} desiredCycles=${initalCycles} ${options} ${icStatement} ${post}" 2> Error.txt
+			
+			ErrorMgsLength=$(wc -c < Error.txt)
+			
+			if [ $ErrorMgsLength -eq 0 ]
+			then
+				failed=false
+				break
+			fi
+		done
+		
+		if [ $failed = true ]
+		then
+			exit 56 ;
+		fi
+		
+		rm Error.txt
+		
 		cCycles=$((cCycles+dCycles))
 
 		ls PreviousCycle* -d | grep -v '\.i' | xargs rm -rf

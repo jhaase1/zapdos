@@ -8,6 +8,7 @@ validParams<HagelaarElectronAdvectionBC>()
   params.addRequiredParam<Real>("r", "The reflection coefficient");
   params.addRequiredCoupledVar("potential", "The electric potential");
   params.addRequiredCoupledVar("mean_en", "The mean energy.");
+	params.addRequiredCoupledVar("em", "The total electon density.");
   params.addParam<Real>("position_units", 1.0, "Units of position.");
   params.addParam<Real>("time_units", 1.0, "Units of time.");
   return params;
@@ -25,6 +26,8 @@ HagelaarElectronAdvectionBC::HagelaarElectronAdvectionBC(const InputParameters &
     _potential_id(coupled("potential")),
     _mean_en(coupledValue("mean_en")),
     _mean_en_id(coupled("mean_en")),
+		
+		_em(coupledValue("em")),
 
     _muem(getMaterialProperty<Real>("muem")),
     _d_muem_d_actual_mean_en(getMaterialProperty<Real>("d_muem_d_actual_mean_en")),
@@ -40,7 +43,7 @@ HagelaarElectronAdvectionBC::computeQpResidual()
 {
   _a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
 
-  _actual_mean_en = std::exp(_mean_en[_qp] - _u[_qp]);
+  _actual_mean_en = std::exp(_mean_en[_qp] - _em[_qp]);
 
   return _test[_i][_qp] * (1.0 - _r) / (1.0 + _r) * (
          -(2.0 * _a - 1.0) * _muem[_qp] * -_grad_potential[_qp] * _normals[_qp] * std::exp(_u[_qp])
@@ -52,7 +55,7 @@ HagelaarElectronAdvectionBC::computeQpJacobian()
 {
   _a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
 
-  _actual_mean_en = std::exp(_mean_en[_qp] - _u[_qp]);
+  _actual_mean_en = std::exp(_mean_en[_qp] - _em[_qp]);
 
   return _test[_i][_qp] * (1.0 - _r) / (1.0 + _r) * (
           -(2.0 * _a - 1.0) * _muem[_qp]                                      * -_grad_potential[_qp] * _normals[_qp] * std::exp(_u[_qp])       *  _phi[_j][_qp] +
@@ -65,7 +68,7 @@ HagelaarElectronAdvectionBC::computeQpOffDiagJacobian(unsigned int jvar)
 {
   _a = (_normals[_qp] * -1.0 * -_grad_potential[_qp] > 0.0) ? 1.0 : 0.0;
 
-  _actual_mean_en = std::exp(_mean_en[_qp] - _u[_qp]);
+  _actual_mean_en = std::exp(_mean_en[_qp] - _em[_qp]);
 	
   if (jvar == _potential_id)
   {

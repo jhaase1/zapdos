@@ -1,11 +1,16 @@
-gap = 3E-6 #m
-vhigh = 22.0E-3 #kV
-work_function = 2.5 # eV
+gap = 10E-6 #m
+vhigh = 30E-3 #kV
+
 VLow = 0.0E-3 # kV (note: positive VLow produces positive work)
+
 cathode_temperature = 1273 # K
+cathode_work_function = 3.5 # eV
+
+anode_temperature = 400 # K
+anode_work_function = ${- ${cathode_work_function} 1} # eV
 
 tOn = 2E-9 #s
-tOff = 140E-9 #s
+tOff = 150E-9 #s
 
 position_units = 1E-6 #m
 time_units = 1E-9 #s
@@ -13,17 +18,25 @@ time_units = 1E-9 #s
 resistance = 1 #Ohms
 area = 1E-4 # Formerly 3.14e-6
 
+NX = ${/ ${gap} 2E-9}
 dom0Size = ${/ ${gap} ${position_units}}
 onTime = ${/ ${tOn} ${time_units}} #s
 offTime  = ${/ ${tOff} ${time_units}} #s
 
-#completedCycles = 0
-#desiredCycles = 10
+completedCycles = 0
+desiredCycles = 1
 nCycles = ${+ ${completedCycles} ${desiredCycles} }
 
 cyclePeriod = ${+ ${onTime} ${offTime}}
 dutyCycle = ${/ ${onTime} ${cyclePeriod}}
 EndTime = ${* ${nCycles} ${cyclePeriod}}
+
+
+r_em_cathode = 0.9
+r_em_anode = 0.9
+
+r_Arp_cathode = 0.1
+r_Arp_anode = 0
 
 [GlobalParams]
 #	offset = 25
@@ -36,13 +49,14 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 []
 
 [Mesh]
-	#MOOSE supports reading field data from ExodusII, XDA/XDR, and mesh checkpoint files (.e, .xda, .xdr, .cp)
-	file = PreviousCycle_out.e
-	parallel_type = REPLICATED
+	type = GeneratedMesh	# Can generate simple lines, rectangles and rectangular prisms
+	dim = 1								# Dimension of the mesh
+	nx = ${NX}							# Number of elements in the x direction
+	xmax = ${dom0Size}				# Length of test chamber
 []
 
 [Problem]
-	restart_file_base = 'PreviousCycle_checkpoint_cp/LATEST'
+	type = FEProblem
 []
 
 [Preconditioning]
@@ -64,8 +78,8 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	ss_check_tol = 1E-15
 #	ss_tmin = ${steadyStateTime}
 
-	petsc_options = '-snes_ksp_ew -superlu_dist'
-	solve_type = NEWTON
+	petsc_options = '-snes_ksp_ew -superlu_dist' # -snes_converged_reason -snes_linesearch_monitor'
+	solve_type = NEWTON # PJFNK
 
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package -pc_factor_shift_type -pc_factor_shift_amount -ksp_type -snes_linesearch_minlambda -ksp_gmres_restart'
 #	petsc_options_value = 'lu mumps NONZERO 1.e-10 preonly 1e-3 100'
@@ -76,19 +90,23 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
 #	petsc_options_value = 'asm lu'
 
-	nl_rel_tol = 5E-9
-	nl_abs_tol = 5E-9
+	nl_rel_tol = 1E-6
+	nl_abs_tol = 1E-10
 
-	dtmin = ${/ 1e-14 ${time_units}}
-	dtmax = ${/ ${onTime} 50 }
+	dtmin = ${/ 1E-14 ${time_units}}
+#	dtmax = ${/ ${onTime} 50 }
 	nl_max_its = 40
 	[./TimeStepper]
 		type = IterationAdaptiveDT
-		dt = ${/ ${onTime} 50 }
+		dt = 0.004096
 		cutback_factor = 0.8
-		growth_factor = 1.5
+		growth_factor = 1.2
 		optimal_iterations = 25
 	[../]
+[]
+
+[Debug]
+	show_var_residual_norms = false
 []
 
 [Outputs]
@@ -98,18 +116,16 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 
 	[./out]
 		type = Exodus
-#		execute_on = 'final'
+	#	execute_on = 'final'
+	#	interval = 50
 	[../]
 	
 	[./checkpoint]
 		type = Checkpoint
 		execute_on = 'final'
 		num_files = 2
+#		interval = 50
 	[../]
-[]
-
-[Debug]
-	show_var_residual_norms = false
 []
 
 [UserObjects]
@@ -129,58 +145,45 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	[../]
 []
 
-[Postprocessors]
-	[./Full_EmissionCurrent]
-		type = SchottkyEmissionPostProcessor
-		boundary = left
-		#r = 1
-		variable = em
-		potential = potential
-		ip = Arp
-	[../]
-	[./Native_EmissionCurrent]
-		type = SchottkyEmissionPostProcessor
-		boundary = left
-		#r = 1
-		variable = em
-		potential = native_potential
-		ip = Arp
-	[../]
-[]
+#[Postprocessors]
+#	[./Full_EmissionCurrent]
+#		type = SchottkyEmissionPostProcessor
+#		boundary = left
+#		#r = 1
+#		variable = em
+#		potential = potential
+#		ip = Arp
+#	[../]
+#	[./Native_EmissionCurrent]
+#		type = SchottkyEmissionPostProcessor
+#		boundary = left
+#		#r = 1
+#		variable = em
+#		potential = native_potential
+#		ip = Arp
+#	[../]
+#[]
 
 [Variables]
 	[./potential]
-		type = LAGRANGE
-		order = FIRST
-		initial_from_file_var = potential
-		initial_from_file_timestep = 'LATEST'
 	[../]
-	[./native_potential]
-		type = LAGRANGE
-		order = FIRST
-		initial_from_file_var = native_potential
-		initial_from_file_timestep = 'LATEST'
-	[../]
-	[./em]
+#	[./native_potential]
+#	[../]
+	[./em_emitted]
 		block = 0
-		type = LAGRANGE
-		order = FIRST
-		initial_from_file_var = em
-		initial_from_file_timestep = 'LATEST'
+		initial_condition = -13
+	[../]
+	[./em_generated]
+		block = 0
+		initial_condition = -13
 	[../]
 	[./Arp]
 		block = 0
-		type = LAGRANGE
-		order = FIRST
-		initial_from_file_var = Arp
-		initial_from_file_timestep = 'LATEST'
+		initial_condition = -15
 	[../]
 	[./mean_en]
 		block = 0
-		type = LAGRANGE
-		order = FIRST
-		initial_from_file_var = mean_en
-		initial_from_file_timestep = 'LATEST'
+		initial_condition = -15
 	[../]
 []
 
@@ -206,44 +209,80 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 
 ## Native Poisson's equation
-	[./native_potential_diffusion_dom1]
-		type = CoeffDiffusionLin
-		variable = native_potential
-		block = 0
-	[../]
-	[./Native_Poisson_RHS]
-		type = SetRHS
-		variable = native_potential
-		value = 1E-15
-		block = 0
-	[../]
+#	[./native_potential_diffusion_dom1]
+#		type = CoeffDiffusionLin
+#		variable = native_potential
+#		block = 0
+#	[../]
+#	[./Native_Poisson_RHS]
+#		type = SetRHS
+#		variable = native_potential
+#		value = 1E-15
+#		block = 0
+#	[../]
 
-## Electron
-	[./em_time_deriv]
+### Electron emitted ##
+	[./em_emitted_time_deriv]
 		type = ElectronTimeDerivative
-		variable = em
+		variable = em_emitted
 		block = 0
 	[../]
-	[./em_advection]
-		type = EFieldAdvectionElectrons
-		variable = em
+	[./em_emitted_advection]
+		type = EFieldAdvectionSubTypeElectrons
+		variable = em_emitted
 		potential = potential
 		mean_en = mean_en
-		block = 0
-	[../]
-	[./em_diffusion]
-		type = CoeffDiffusionElectrons
-		variable = em
-		mean_en = mean_en
-		block = 0
-	[../]
-	[./em_ionization]
-		type = ElectronsFromIonization
-		variable = em
 		em = em
-		potential = potential
-		mean_en = mean_en
 		block = 0
+	[../]
+	[./em_emitted_diffusion]
+		type = CoeffDiffusionElectrons
+		variable = em_emitted
+		mean_en = mean_en
+		em = em
+		block = 0
+	[../]
+	
+#	[./em_emitted_set_value]
+#		type = SetValue
+#		variable = em_emitted
+#		value = -13
+#	[../]
+	
+### Electron generated ##
+#	[./em_generated_time_deriv]
+#		type = ElectronTimeDerivative
+#		variable = em_generated
+#		block = 0
+#	[../]
+#	[./em_generated_advection]
+#		type = EFieldAdvectionElectrons
+#		variable = em_generated
+#		potential = potential
+#		mean_en = mean_en
+#		em = em
+#		block = 0
+#	[../]
+#	[./em_generated_diffusion]
+#		type = CoeffDiffusionElectrons
+#		variable = em_generated
+#		mean_en = mean_en
+#		em = em
+#		block = 0
+#	[../]
+#	[./em_generated_ionization]
+#		type = ElectronsFromIonization
+#		variable = em_generated
+#		em = em
+#		potential = potential
+#		mean_en = mean_en
+#		block = 0
+#	[../]
+
+	[./em_generated_set_value]
+		type = SetValue
+		variable = em_generated
+		value = -13
 	[../]
 
 ## Ion
@@ -263,14 +302,14 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		variable = Arp
 		block = 0
 	[../]
-	[./Arp_ionization]
-		type = IonsFromIonization
-		variable = Arp
-		potential = potential
-		em = em
-		mean_en = mean_en
-		block = 0
-	[../]
+#	[./Arp_ionization]
+#		type = IonsFromIonization
+#		variable = Arp
+#		potential = potential
+#		em = em
+#		mean_en = mean_en
+#		block = 0
+#	[../]
 
 ## Mean energy
 	[./mean_en_time_deriv]
@@ -312,13 +351,13 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		em = em
 		block = 0
 	[../]
-	[./mean_en_ionization]
-		type = ElectronEnergyLossFromIonization
-		variable = mean_en
-		potential = potential
-		em = em
-		block = 0
-	[../]
+#	[./mean_en_ionization]
+#		type = ElectronEnergyLossFromIonization
+#		variable = mean_en
+#		potential = potential
+#		em = em
+#		block = 0
+#	[../]
 
 
 ## Stabilization
@@ -361,11 +400,51 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		order = CONSTANT
 		family = MONOMIAL
 	[../]
+
+	## em for simulation
+	[./em_emitted_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em_generated_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	## em outputs
+	[./em_emitted_lin]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+
+	[./em_generated_lin]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+	
 	[./em_lin]
 		order = CONSTANT
 		family = MONOMIAL
 		block = 0
 	[../]
+	
 	[./Arp_lin]
 		order = CONSTANT
 		family = MONOMIAL
@@ -421,16 +500,16 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		block = 0
 	[../]
 
-	[./PowerDepProvided_em]
-		order = CONSTANT
-		family = MONOMIAL
-		block = 0
-	[../]
-	[./PowerDepProvided_Arp]
-		order = CONSTANT
-		family = MONOMIAL
-		block = 0
-	[../]
+#	[./PowerDepProvided_em]
+#		order = CONSTANT
+#		family = MONOMIAL
+#		block = 0
+#	[../]
+#	[./PowerDepProvided_Arp]
+#		order = CONSTANT
+#		family = MONOMIAL
+#		block = 0
+#	[../]
 
 	[./ProcRate_el]
 		order = CONSTANT
@@ -447,6 +526,23 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		family = MONOMIAL
 		block = 0
 	[../]
+	
+	[./Alpha_el]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+	[./Alpha_ex]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+	[./Alpha_iz]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+
 	[./Emission_energy_flux]
 		order = CONSTANT
 		family = MONOMIAL
@@ -476,18 +572,71 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		block = 0
 	[../]
 
-	[./em_lin]
-		type = DensityMoles #Density
-		variable = em_lin
-		density_log = em
-		#use_moles = false
+	## em for simulation
+	[./em_emitted_lin_moles]
+		type = DensityMoles
+		variable = em_emitted_lin_moles
+		density_log = em_emitted
+		convert_units = false
 		block = 0
 	[../]
+	
+	[./em_generated_lin_moles]
+		type = DensityMoles
+		variable = em_generated_lin_moles
+		density_log = em_generated
+		convert_units = false
+		block = 0
+	[../]
+	
+	[./em_lin_moles]
+		type = ParsedAux
+		variable = em_lin_moles
+		args = 'em_emitted_lin_moles em_generated_lin_moles'
+		function = 'em_emitted_lin_moles + em_generated_lin_moles'
+		execute_on = 'timestep_begin linear nonlinear timestep_end'
+		block = 0
+	[../]
+	
+	[./em]
+		type = InverseDensity
+		variable = em
+		density = em_lin_moles
+		execute_on = 'timestep_begin linear nonlinear timestep_end'
+		block = 0
+	[../]
+	
+	## em outputs
+	[./em_generated_lin]
+		type = DensityMoles
+		variable = em_generated_lin
+		density_log = em_generated
+		convert_units = true
+		block = 0
+	[../]
+
+	[./em_emitted_lin]
+		type = DensityMoles
+		variable = em_emitted_lin
+		density_log = em_emitted
+		convert_units = true
+		block = 0
+	[../]
+
+	[./em_lin]
+		type = ParsedAux
+		variable = em_lin
+		args = 'em_emitted_lin em_generated_lin'
+		function = 'em_emitted_lin + em_generated_lin'
+		execute_on = 'timestep_end'
+		block = 0
+	[../]
+	
 	[./Arp_lin]
-		type = DensityMoles #Density
+		type = DensityMoles
 		variable = Arp_lin
 		density_log = Arp
-		#use_moles = false
+		convert_units = true
 		block = 0
 	[../]
 
@@ -552,24 +701,24 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		block = 0
 	[../]
 
-	[./PowerDepProvided_em]
-		type = PowerDep
-		density_log = em
-		potential = native_potential
-		art_diff = false
-		power_used = true
-		variable = PowerDepProvided_em
-		block = 0
-	[../]
-	[./PowerDepProvided_Arp]
-		type = PowerDep
-		density_log = Arp
-		potential = native_potential
-		art_diff = false
-		power_used = true
-		variable = PowerDepProvided_Arp
-		block = 0
-	[../]
+#	[./PowerDepProvided_em]
+#		type = PowerDep
+#		density_log = em
+#		potential = native_potential
+#		art_diff = false
+#		power_used = true
+#		variable = PowerDepProvided_em
+#		block = 0
+#	[../]
+#	[./PowerDepProvided_Arp]
+#		type = PowerDep
+#		density_log = Arp
+#		potential = native_potential
+#		art_diff = false
+#		power_used = true
+#		variable = PowerDepProvided_Arp
+#		block = 0
+#	[../]
 
 	[./ProcRate_el]
 		type = ProcRate
@@ -595,6 +744,26 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		variable = ProcRate_iz
 		block = 0
 	[../]
+	
+	[./Alpha_el]
+		type = Alpha
+		proc = el
+		variable = Alpha_el
+		block = 0
+	[../]
+	[./Alpha_ex]
+		type = Alpha
+		proc = ex
+		variable = Alpha_ex
+		block = 0
+	[../]
+	[./Alpha_iz]
+		type = Alpha
+		proc = iz
+		variable = Alpha_iz
+		block = 0
+	[../]
+	
 #	[./x_ng]
 #		type = Position
 #		variable = x_node
@@ -620,10 +789,10 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		type = ParsedAux
 		variable = Emission_energy_flux
 		args = 'Current_em'
-		function = '-Current_em * (${work_function} + 2*8.6173303E-5*${cathode_temperature})'
+		function = '-Current_em * (${cathode_work_function} + 2*8.6173303E-5*${cathode_temperature})'
 		execute_on = 'timestep_end'
 		block = 0
-	[../]	
+	[../]
 []
 
 [BCs]
@@ -648,12 +817,12 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 #	[../]
 
 	[./potential_dirichlet_left]
-		# type = DirichletBC
-		type = FunctionDirichletBC
+		 type = DirichletBC
+		#type = FunctionDirichletBC
 		variable = potential
 		boundary = left
-		# value = -${vhigh}
-		function = potential_bc_func
+		value = -${vhigh}
+		#function = potential_bc_func
 	[../]
 
 	[./potential_dirichlet_right]
@@ -664,122 +833,176 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 	[../]
 
 ### Native potential boundary conditions ###
-	[./native_potential_dirichlet_left]
+#	[./native_potential_dirichlet_left]
+##		type = DirichletBC
+#		type = FunctionDirichletBC
+#		variable = native_potential
+#		boundary = left
+##		value = -${vhigh}
+#		function = potential_bc_func
+#	[../]
+
+#	[./native_potential_dirichlet_right]
 #		type = DirichletBC
-		type = FunctionDirichletBC
-		variable = native_potential
-		boundary = left
-#		value = -${vhigh}
-		function = potential_bc_func
-	[../]
+#		variable = native_potential
+#		boundary = right
+#		value = 0
+#	[../]
 
-	[./native_potential_dirichlet_right]
-		type = DirichletBC
-		variable = native_potential
-		boundary = right
-		value = 0
-	[../]
-
-### Electron boundary conditions ##
+## Electron boundary conditions ##
 	[./Emission_left]
-		type = SchottkyEmissionBC
+		type = SchottkyEmissionNewBC
+#		type = SchottkyEmissionBC
 #		type = SecondaryElectronBC
-		variable = em
+		variable = em_emitted
 		boundary = left
 		potential = potential
-		ip = Arp
+		em = em
 		mean_en = mean_en
-		r = 1
+		ip = Arp
+		r = ${r_em_cathode}
 #		tau = ${relaxTime}
 		relax = false
+		work_function = ${cathode_work_function} # eV
+		field_enhancement = 55
+		Richardson_coefficient = 80E4
+		temperature = ${cathode_temperature} # K
+	[../]
+	
+	[./Emission_right]
+		type = SchottkyEmissionNewBC
+#		type = SchottkyEmissionBC
+#		type = SecondaryElectronBC
+		variable = em_emitted
+		em = em
+		boundary = right
+		potential = potential
+		mean_en = mean_en
+		ip = Arp
+		r = ${r_em_cathode}
+#		tau = ${relaxTime}
+		relax = false
+		work_function = ${anode_work_function} # eV
+		field_enhancement = 55
+		Richardson_coefficient = 80E4
+		temperature = ${anode_temperature} # K
 	[../]
 
 	[./em_physical_right]
-		type = HagelaarElectronBC # HagelaarElectronAdvectionBC
-		variable = em
+		type = HagelaarElectronBC
+		variable = em_emitted
 		boundary = right
 		potential = potential
 		mean_en = mean_en
-		r = 0
+		em = em
+		r = ${r_em_anode}
+	[../]	
+	
+#	[./mean_en_emission_left]
+#		type = DirichletBC
+#		variable = em_emitted
+#		boundary = right
+#		value = -13
+#	[../]
+
+#	[./Flat_emission_right]
+#		type = DirichletBC
+#		variable = em_emitted
+#		boundary = right
+#		value = -13
+#	[../]
+
+#	[./em_physical_left]
+#		type = HagelaarElectronBC # HagelaarElectronAdvectionBC
+#		variable = em_generated
+#		boundary = left
+#		potential = potential
+#		mean_en = mean_en
+#		r = ${r_em_cathode}
+#	[../]
+#	
+
+
+	[./Flat_generated_left]
+		type = DirichletBC
+		variable = em_generated
+		boundary = left
+		value = -15
 	[../]
 
-#	[./Emission_right]
-#		type = SchottkyEmissionBC
-#		type = SecondaryElectronBC
-#		variable = em
-#		boundary = right
-#		potential = potential
-#		ip = Arp
-#		mean_en = mean_en
-#		r = 0
-#		tau = ${relaxTime}
-#		relax = false
-#	[../]
+	[./Flat_generated_right]
+		type = DirichletBC
+		variable = em_generated
+		boundary = right
+		value = -15
+	[../]
 
 ## Argon boundary conditions ##
 	[./Arp_physical_left_diffusion]
 		type = HagelaarIonDiffusionBC
 		variable = Arp
 		boundary = 'left'
-		r = 0
+		r = ${r_Arp_cathode}
 	[../]
 	[./Arp_physical_left_advection]
 		type = HagelaarIonAdvectionBC
 		variable = Arp
 		boundary = 'left'
 		potential = potential
-		r = 0
+		r = ${r_Arp_cathode}
 	[../]
 
 	[./Arp_physical_right_diffusion]
 		type = HagelaarIonDiffusionBC
 		variable = Arp
 		boundary = right
-		r = 0
+		r = ${r_Arp_anode}
 	[../]
 	[./Arp_physical_right_advection]
 		type = HagelaarIonAdvectionBC
 		variable = Arp
 		boundary = right
 		potential = potential
-		r = 0
+		r = ${r_Arp_anode}
 	[../]
 
 ## Mean energy boundary conditions ##
 	[./mean_en_emission_left]
-		type = SchottkyEmissionEnergyBC
+#		type = SchottkyEmissionEnergyBC
+		type = SchottkyEmissionEnergyNewBC
 		variable = mean_en
 		boundary = left
+		em_emitted = em_emitted
 		em = em
 		potential = potential
 		ip = Arp
 		mean_en = mean_en
-		r = 1
+		r = ${r_em_cathode}
 #		tau = ${relaxTime}
 		relax = false
+		work_function = ${cathode_work_function} # eV
+		field_enhancement = 55
+		Richardson_coefficient = 80E4
+		temperature = ${cathode_temperature} # K
 	[../]
-
+	
 #	[./mean_en_emission_right]
 #		type = SchottkyEmissionEnergyBC
+#		type = SchottkyEmissionEnergyNewBC
 #		variable = mean_en
 #		boundary = right
+#		em_emitted = em_emitted
 #		em = em
 #		potential = potential
 #		ip = Arp
 #		mean_en = mean_en
-#		r = 0
-#		tau = ${relaxTime}
+#		r = ${r_em_cathode}
+##		tau = ${relaxTime}
 #		relax = false
-#	[../]
-
-#	[./mean_en_physical_left]
-#		type = HagelaarEnergyBC
-#		variable = mean_en
-#		boundary = left
-#		potential = potential
-#		em = em
-#		ip = Arp
-#		r = 1
+#		work_function = ${anode_work_function} # eV
+#		field_enhancement = 55
+#		Richardson_coefficient = 80E4
+#		temperature = ${anode_temperature} # K
 #	[../]
 
 	[./mean_en_physical_right]
@@ -788,9 +1011,49 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		boundary = right
 		potential = potential
 		em = em
-		ip = Arp
-		r = 0
+		r = ${r_em_anode}
 	[../]
+
+#	[./mean_en_physical_left]
+#		type = HagelaarEnergyBC # HagelaarEnergyAdvectionBC
+#		variable = mean_en
+#		boundary = left
+#		potential = potential
+#		em = em
+#		r = ${r_em_cathode}
+#	[../]
+#	
+#	[./mean_en_physical_right]
+#		type = HagelaarEnergyBC # HagelaarEnergyAdvectionBC
+#		variable = mean_en
+#		boundary = right
+#		potential = potential
+#		em = em
+#		r = ${r_em_anode}
+#	[../]
+	
+	[./mean_en_generated_left]
+		type = DirichletBC
+		variable = mean_en
+		boundary = left
+		value = -13
+	[../]
+
+
+[]
+
+[ICs]
+	[./potential_ic]
+		type = FunctionIC
+		variable = potential
+		function = potential_ic_func
+	[../]
+
+#	[./native_potential_ic]
+#		type = FunctionIC
+#		variable = native_potential
+#		function = potential_ic_func
+#	[../]
 []
 
 [Functions]
@@ -812,7 +1075,7 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 
 	[./potential_ic_func]
 		type = ParsedFunction
-		value = '-${vhigh} * (${dom0Size} - x) / ${dom0Size}'
+		value = '-${/ ${vhigh} 2.0} * (${dom0Size} - x) / ${dom0Size}'
 	[../]
 
 []
@@ -829,12 +1092,13 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		ip = Arp
 		mean_en = mean_en
 		user_se_coeff = 0.02
-		user_work_function = ${work_function} # eV
+		user_work_function = ${cathode_work_function} # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
 		user_cathode_temperature = ${cathode_temperature} # K
 		property_tables_file = td_argon_mean_en.tsv
 		block = 0
+		user_T_gas = 500
 	[../]
 	
 	[./xenon_gas_block]
@@ -848,12 +1112,13 @@ EndTime = ${* ${nCycles} ${cyclePeriod}}
 		ip = Arp
 		mean_en = mean_en
 		user_se_coeff = 0.02
-		user_work_function = ${work_function} # eV
+		user_work_function = ${cathode_work_function} # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
 		user_cathode_temperature = ${cathode_temperature} # K
 		property_tables_file = td_xenon_mean_en.tsv
 		block = 0
+		user_T_gas = 500
 	[../]
 
 	[./electricConstant]

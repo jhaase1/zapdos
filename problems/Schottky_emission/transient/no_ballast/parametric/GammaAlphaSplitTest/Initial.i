@@ -1,11 +1,16 @@
-gap = 4E-6 #m
-vhigh = 200E-3 #kV
-cathode_work_function = 4.00 # eV
-VLow = 1E-3 # kV (note: positive VLow produces positive work)
-cathode_temperature = 1273 # K
+gap = 10E-6 #m
+vhigh = 30E-3 #kV
 
-tOn = 0.5E-9 #s
-tOff = 21E-9 #s
+VLow = 0.0E-3 # kV (note: positive VLow produces positive work)
+
+cathode_temperature = 1273 # K
+cathode_work_function = 3.5 # eV
+
+anode_temperature = 400 # K
+anode_work_function = ${- ${cathode_work_function} 1} # eV
+
+tOn = 2E-9 #s
+tOff = 150E-9 #s
 
 position_units = 1E-6 #m
 time_units = 1E-9 #s
@@ -18,8 +23,8 @@ dom0Size = ${/ ${gap} ${position_units}}
 onTime = ${/ ${tOn} ${time_units}} #s
 offTime  = ${/ ${tOff} ${time_units}} #s
 
-#completedCycles = 0
-#desiredCycles = 1
+completedCycles = 0
+desiredCycles = 1
 nCycles = ${+ ${completedCycles} ${desiredCycles} }
 
 cyclePeriod = ${+ ${onTime} ${offTime}}
@@ -41,7 +46,6 @@ r_Arp_anode = 0
 #	 potential_units = V
 	use_moles = true
 #	use_moles = false
-  em = em
 []
 
 [Mesh]
@@ -75,7 +79,7 @@ r_Arp_anode = 0
 #	ss_tmin = ${steadyStateTime}
 
 	petsc_options = '-snes_ksp_ew -superlu_dist' # -snes_converged_reason -snes_linesearch_monitor'
-	solve_type = NEWTON
+	solve_type = NEWTON # PJFNK
 
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package -pc_factor_shift_type -pc_factor_shift_amount -ksp_type -snes_linesearch_minlambda -ksp_gmres_restart'
 #	petsc_options_value = 'lu mumps NONZERO 1.e-10 preonly 1e-3 100'
@@ -112,13 +116,15 @@ r_Arp_anode = 0
 
 	[./out]
 		type = Exodus
-		execute_on = 'final'
+	#	execute_on = 'final'
+	#	interval = 50
 	[../]
 	
 	[./checkpoint]
 		type = Checkpoint
 		execute_on = 'final'
 		num_files = 2
+#		interval = 50
 	[../]
 []
 
@@ -163,17 +169,21 @@ r_Arp_anode = 0
 	[../]
 	[./native_potential]
 	[../]
-	[./em]
+	[./em_emitted]
 		block = 0
-		initial_condition = -25
+		initial_condition = -15
+	[../]
+	[./em_generated]
+		block = 0
+		initial_condition = -15
 	[../]
 	[./Arp]
 		block = 0
-		initial_condition = -25
+		initial_condition = -15
 	[../]
 	[./mean_en]
 		block = 0
-		initial_condition = -25
+		initial_condition = -15
 	[../]
 []
 
@@ -211,29 +221,53 @@ r_Arp_anode = 0
 		block = 0
 	[../]
 
-## Electron
-	[./em_time_deriv]
+## Electron emitted ##
+	[./em_emitted_time_deriv]
 		type = ElectronTimeDerivative
-		variable = em
+		variable = em_emitted
 		block = 0
 	[../]
-	[./em_advection]
+	[./em_emitted_advection]
 		type = EFieldAdvectionElectrons
-		variable = em
+		variable = em_emitted
 		potential = potential
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
-	[./em_diffusion]
+	[./em_emitted_diffusion]
 		type = CoeffDiffusionElectrons
-		variable = em
+		variable = em_emitted
 		mean_en = mean_en
+		em = em
 		block = 0
 	[../]
-	[./em_ionization]
+	
+## Electron generated ##
+	[./em_generated_time_deriv]
+		type = ElectronTimeDerivative
+		variable = em_generated
+		block = 0
+	[../]
+	[./em_generated_advection]
+		type = EFieldAdvectionElectrons
+		variable = em_generated
+		potential = potential
+		mean_en = mean_en
+		em = em
+		block = 0
+	[../]
+	[./em_generated_diffusion]
+		type = CoeffDiffusionElectrons
+		variable = em_generated
+		mean_en = mean_en
+		em = em
+		block = 0
+	[../]
+	[./em_generated_ionization]
 		type = ElectronsFromIonization
-		variable = em
-		#em = em
+		variable = em_generated
+		em = em
 		potential = potential
 		mean_en = mean_en
 		block = 0
@@ -354,11 +388,51 @@ r_Arp_anode = 0
 		order = CONSTANT
 		family = MONOMIAL
 	[../]
+
+	## em for simulation
+	[./em_emitted_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em_generated_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em_lin_moles]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	[./em]
+		order = FIRST
+		family = MONOMIAL
+		block = 0
+	[../]
+	
+	## em outputs
+	[./em_emitted_lin]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+
+	[./em_generated_lin]
+		order = CONSTANT
+		family = MONOMIAL
+		block = 0
+	[../]
+	
 	[./em_lin]
 		order = CONSTANT
 		family = MONOMIAL
 		block = 0
 	[../]
+	
 	[./Arp_lin]
 		order = CONSTANT
 		family = MONOMIAL
@@ -486,13 +560,66 @@ r_Arp_anode = 0
 		block = 0
 	[../]
 
-	[./em_lin]
+	## em for simulation
+	[./em_emitted_lin_moles]
 		type = DensityMoles
-		variable = em_lin
-		density_log = em
+		variable = em_emitted_lin_moles
+		density_log = em_emitted
+		convert_units = false
+		block = 0
+	[../]
+	
+	[./em_generated_lin_moles]
+		type = DensityMoles
+		variable = em_generated_lin_moles
+		density_log = em_generated
+		convert_units = false
+		block = 0
+	[../]
+	
+	[./em_lin_moles]
+		type = ParsedAux
+		variable = em_lin_moles
+		args = 'em_emitted_lin_moles em_generated_lin_moles'
+		function = 'em_emitted_lin_moles + em_generated_lin_moles'
+		execute_on = 'timestep_begin linear nonlinear timestep_end'
+		block = 0
+	[../]
+	
+	[./em]
+		type = InverseDensity
+		variable = em
+		density = em_lin_moles
+		execute_on = 'timestep_begin linear nonlinear timestep_end'
+		block = 0
+	[../]
+	
+	## em outputs
+	[./em_generated_lin]
+		type = DensityMoles
+		variable = em_generated_lin
+		density_log = em_generated
 		convert_units = true
 		block = 0
 	[../]
+
+	[./em_emitted_lin]
+		type = DensityMoles
+		variable = em_emitted_lin
+		density_log = em_emitted
+		convert_units = true
+		block = 0
+	[../]
+
+	[./em_lin]
+		type = ParsedAux
+		variable = em_lin
+		args = 'em_emitted_lin em_generated_lin'
+		function = 'em_emitted_lin + em_generated_lin'
+		execute_on = 'timestep_end'
+		block = 0
+	[../]
+	
 	[./Arp_lin]
 		type = DensityMoles
 		variable = Arp_lin
@@ -715,9 +842,10 @@ r_Arp_anode = 0
 		type = SchottkyEmissionNewBC
 #		type = SchottkyEmissionBC
 #		type = SecondaryElectronBC
-		variable = em
+		variable = em_emitted
 		boundary = left
 		potential = potential
+		em = em
 		mean_en = mean_en
 		ip = Arp
 		r = ${r_em_cathode}
@@ -728,10 +856,36 @@ r_Arp_anode = 0
 		Richardson_coefficient = 80E4
 		temperature = ${cathode_temperature} # K
 	[../]
+	
+#	[./Emission_right]
+#		type = SchottkyEmissionNewBC
+##		type = SchottkyEmissionBC
+##		type = SecondaryElectronBC
+#		variable = em_emitted
+#		em = em
+#		boundary = right
+#		potential = potential
+#		mean_en = mean_en
+#		ip = Arp
+#		r = ${r_em_cathode}
+##		tau = ${relaxTime}
+#		relax = false
+#		work_function = ${anode_work_function} # eV
+#		field_enhancement = 55
+#		Richardson_coefficient = 80E4
+#		temperature = ${anode_temperature} # K
+#	[../]
+
+	[./Flat_emission_right]
+		type = NeumannBC
+		variable = em_emitted
+		boundary = right
+		value = 0
+	[../]
 
 	[./em_physical_left]
 		type = HagelaarElectronBC # HagelaarElectronAdvectionBC
-		variable = em
+		variable = em_generated
 		boundary = left
 		potential = potential
 		mean_en = mean_en
@@ -740,7 +894,7 @@ r_Arp_anode = 0
 	
 	[./em_physical_right]
 		type = HagelaarElectronBC # HagelaarElectronAdvectionBC
-		variable = em
+		variable = em_generated
 		boundary = right
 		potential = potential
 		mean_en = mean_en
@@ -782,6 +936,7 @@ r_Arp_anode = 0
 		type = SchottkyEmissionEnergyNewBC
 		variable = mean_en
 		boundary = left
+		em_emitted = em_emitted
 		em = em
 		potential = potential
 		ip = Arp
@@ -793,6 +948,25 @@ r_Arp_anode = 0
 		field_enhancement = 55
 		Richardson_coefficient = 80E4
 		temperature = ${cathode_temperature} # K
+	[../]
+	
+	[./mean_en_emission_right]
+#		type = SchottkyEmissionEnergyBC
+		type = SchottkyEmissionEnergyNewBC
+		variable = mean_en
+		boundary = right
+		em_emitted = em_emitted
+		em = em
+		potential = potential
+		ip = Arp
+		mean_en = mean_en
+		r = ${r_em_cathode}
+#		tau = ${relaxTime}
+		relax = false
+		work_function = ${anode_work_function} # eV
+		field_enhancement = 55
+		Richardson_coefficient = 80E4
+		temperature = ${anode_temperature} # K
 	[../]
 
 	[./mean_en_physical_left]
