@@ -1,30 +1,10 @@
-gap = 10E-6 #m
-vhigh = 20E-3 #kV
-cathode_work_function = 3.5 # eV
-cathode_temperature = 1273 # K
-
-position_units = 1E-6 #m
-time_units = 1E-9 #s
-
 resistance = 1 #Ohms
 area = 1E-4 # Formerly 3.14e-6
 
-NX = ${/ ${gap} 2E-9}
-dom0Size = ${/ ${gap} ${position_units}}
-
-steadyStateTime = ${/ 1E-6 ${time_units}}
-EndTime = ${/ 1 ${time_units}}
-
-r_em_cathode = 0.9
-r_em_anode = 0.9
-
-r_Arp_cathode = 0.1
-r_Arp_anode = 0
-
 [GlobalParams]
 #	offset = 25
-	time_units = ${time_units}
-	position_units = ${position_units}
+	time_units = 1E-9
+	position_units = 1E-6
 	potential_units = kV
 #	 potential_units = V
 	use_moles = true
@@ -34,8 +14,8 @@ r_Arp_anode = 0
 [Mesh]
 	type = GeneratedMesh	# Can generate simple lines, rectangles and rectangular prisms
 	dim = 1								# Dimension of the mesh
-	nx = ${NX}							# Number of elements in the x direction
-	xmax = ${dom0Size}				# Length of test chamber
+	nx = 5000							# Number of elements in the x direction
+	xmax = 10				# Length of test chamber
 []
 
 [Problem]
@@ -51,7 +31,7 @@ r_Arp_anode = 0
 
 [Executioner]
 	type = Transient
-	end_time = ${EndTime} # ${/ 1e-3 ${time_units}}
+	end_time = 1E9
 
 #	[./TimeIntegrator]
 #		type = ImplicitEuler #AStableDirk4 #CrankNicolson #ImplicitMidpoint #AStableDirk4 #CrankNicolson #ImplicitEuler
@@ -59,7 +39,7 @@ r_Arp_anode = 0
 
 	trans_ss_check = 1
 	ss_check_tol = 1E-15
-	ss_tmin = ${steadyStateTime}
+	ss_tmin = 1000
 
 	petsc_options = '-snes_ksp_ew -superlu_dist' # -snes_converged_reason -snes_linesearch_monitor'
 	solve_type = NEWTON
@@ -76,8 +56,7 @@ r_Arp_anode = 0
 	nl_rel_tol = 1E-3
 	nl_abs_tol = 1E-11
 
-	dtmin = ${/ 1E-16 ${time_units}}
-#	dtmax = ${/ ${onTime} 50 }
+	dtmin = 1E-7
 	nl_max_its = 40
 	[./TimeStepper]
 		type = IterationAdaptiveDT
@@ -107,23 +86,6 @@ r_Arp_anode = 0
 		execute_on = 'final'
 		num_files = 2
 	[../]
-[]
-
-[UserObjects]
-#	[./current_density_user_object]
-#		type = CurrentDensityShapeSideUserObject
-#		boundary = left
-#		potential = potential
-#		em = em
-#		ip = Arp
-#		mean_en = mean_en
-#		execute_on = 'linear nonlinear'
-#	[../]
-#	[./data_provider]
-#		type = ProvideMobility
-#		electrode_area = ${area}
-#		ballast_resist = ${resistance}
-#	[../]
 []
 
 [Postprocessors]
@@ -632,44 +594,14 @@ r_Arp_anode = 0
 		variable = DiffusiveFlux_em
 		block = 0
 	[../]
-
-	[./Emission_energy_flux]
-		type = ParsedAux
-		variable = Emission_energy_flux
-		args = 'Current_em'
-		function = '-Current_em * (${cathode_work_function} + 2*8.6173303E-5*${cathode_temperature})'
-		execute_on = 'timestep_end'
-		block = 0
-	[../]
 []
 
 [BCs]
 ## Potential boundary conditions ##
-#	[./potential_left]
-#		boundary = left
-##		type = NeumannCircuitVoltageNew
-##		source_voltage = potential_bc_func
-#
-#		type = PenaltyCircuitPotential
-#		surface_potential = -${vhigh}
-#		penalty = 1
-#		variable = potential
-#		current = current_density_user_object
-#		surface = 'cathode'
-#		data_provider = data_provider
-#		em = em
-#		ip = Arp
-#		mean_en = mean_en
-#		area = ${area}
-#		resistance = ${resistance}
-#	[../]
-
 	[./potential_dirichlet_left]
-		#type = DirichletBC
 		type = FunctionDirichletBC
 		variable = potential
 		boundary = left
-		#value = -${vhigh}
 		function = potential_bc_func
 	[../]
 
@@ -682,11 +614,9 @@ r_Arp_anode = 0
 
 ### Native potential boundary conditions ###
 	[./native_potential_dirichlet_left]
-		#type = DirichletBC
 		type = FunctionDirichletBC
 		variable = native_potential
 		boundary = left
-		#value = -${vhigh}
 		function = potential_bc_func
 	[../]
 
@@ -708,13 +638,12 @@ r_Arp_anode = 0
 		potential = potential
 		mean_en = mean_en
 		ip = Arp
-		r = ${r_em_cathode}
-#		tau = ${relaxTime}
+		r = 0.9
 		relax = false
-		work_function = ${cathode_work_function} # eV
+		work_function = 3.5 # eV
 		field_enhancement = 55
 		Richardson_coefficient = 80E4
-		temperature = ${cathode_temperature} # K
+		temperature = 1273 # K
 	[../]
 
 	[./em_physical_left]
@@ -723,7 +652,7 @@ r_Arp_anode = 0
 		boundary = left
 		potential = potential
 		mean_en = mean_en
-		r = ${r_em_cathode}
+		r = 0.9
 	[../]
 	
 	[./em_physical_right]
@@ -732,7 +661,7 @@ r_Arp_anode = 0
 		boundary = right
 		potential = potential
 		mean_en = mean_en
-		r = ${r_em_anode}
+		r = 0.9
 	[../]
 
 ## Argon boundary conditions ##
@@ -740,28 +669,28 @@ r_Arp_anode = 0
 		type = HagelaarIonDiffusionBC
 		variable = Arp
 		boundary = 'left'
-		r = ${r_Arp_cathode}
+		r = 0.1
 	[../]
 	[./Arp_physical_left_advection]
 		type = HagelaarIonAdvectionBC
 		variable = Arp
 		boundary = 'left'
 		potential = potential
-		r = ${r_Arp_cathode}
+		r = 0.1
 	[../]
 
 	[./Arp_physical_right_diffusion]
 		type = HagelaarIonDiffusionBC
 		variable = Arp
 		boundary = right
-		r = ${r_Arp_anode}
+		r = 0
 	[../]
 	[./Arp_physical_right_advection]
 		type = HagelaarIonAdvectionBC
 		variable = Arp
 		boundary = right
 		potential = potential
-		r = ${r_Arp_anode}
+		r = 0
 	[../]
 
 ## Mean energy boundary conditions ##
@@ -774,13 +703,12 @@ r_Arp_anode = 0
 		potential = potential
 		ip = Arp
 		mean_en = mean_en
-		r = ${r_em_cathode}
-#		tau = ${relaxTime}
+		r = 0.9
 		relax = false
-		work_function = ${cathode_work_function} # eV
+		work_function = 3.5 # eV
 		field_enhancement = 55
 		Richardson_coefficient = 80E4
-		temperature = ${cathode_temperature} # K
+		temperature = 1273 # K
 	[../]
 
 	[./mean_en_physical_left]
@@ -789,7 +717,7 @@ r_Arp_anode = 0
 		boundary = left
 		potential = potential
 		em = em
-		r = ${r_em_cathode}
+		r = 0.9
 	[../]
 	
 	[./mean_en_physical_right]
@@ -798,7 +726,7 @@ r_Arp_anode = 0
 		boundary = right
 		potential = potential
 		em = em
-		r = ${r_em_anode}
+		r = 0.9
 	[../]
 []
 
@@ -820,22 +748,13 @@ r_Arp_anode = 0
 	[./potential_bc_func]
 		type = ParsedFunction
 		vars = 'VHigh'
-		vals = '${vhigh}')
+		vals = '20')
 		value = '-VHigh'
 	[../]
 
-#	[./potential_bc_func]
-#		type = SmoothedStepFunction
-#		vLow = ${* -1 ${VLow}}
-#		vHigh = -${vhigh}
-#		period = ${cyclePeriod}
-#		duty = ${dutyCycle}
-#		rise = 500
-#	[../]
-
 	[./potential_ic_func]
 		type = ParsedFunction
-		value = '-${/ ${vhigh} 1.0} * (${dom0Size} - x) / ${dom0Size}'
+		value = '-20 * (10 - x) / 10'
 	[../]
 
 []
@@ -852,10 +771,10 @@ r_Arp_anode = 0
 		ip = Arp
 		mean_en = mean_en
 		user_se_coeff = 0.02
-		user_work_function = ${cathode_work_function} # eV
+		user_work_function = 3.5 # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
-		user_cathode_temperature = ${cathode_temperature} # K
+		user_cathode_temperature = 1273 # K
 		property_tables_file = td_argon_mean_en.tsv
 		block = 0
 		user_T_gas = 500
@@ -872,10 +791,10 @@ r_Arp_anode = 0
 		ip = Arp
 		mean_en = mean_en
 		user_se_coeff = 0.02
-		user_work_function = ${cathode_work_function} # eV
+		user_work_function = 3.5 # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
-		user_cathode_temperature = ${cathode_temperature} # K
+		user_cathode_temperature = 1273 # K
 		property_tables_file = td_xenon_mean_en.tsv
 		block = 0
 		user_T_gas = 500
