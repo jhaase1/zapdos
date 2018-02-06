@@ -22,8 +22,7 @@ def IntegrateOverSpace(data):
     
     return integrateVariablesOverSpace
 
-
-path = os.getcwd() + '/'
+path = os.getcwd() + '/' # "C:\\Users\\John\\Desktop\\" #
 files = ['SteadyState_out.e', 'PreviousCycle_out.e' ]
 reader = []
 
@@ -31,29 +30,39 @@ for idx, fl in enumerate(files):
     reader.append(ExodusIIReader(FileName=path+fl))
     reader[idx].GenerateObjectIdCellArray = 1
     reader[idx].GenerateGlobalElementIdArray = 1
-    ElementVariables = reader[idx].ElementVariables.Available
-    ElementVariables.remove('x')
+    ElementVariables = [a for a in reader[idx].ElementVariables.Available if ( ( not a.startswith('ProcRate')) and ( not a.startswith('PowerDep')) and ( not a.startswith('x'))) ]
+#    ElementVariables.remove('x')
     reader[idx].ElementVariables = ElementVariables
     reader[idx].PointVariables = reader[idx].PointVariables.Available
     reader[idx].ElementBlocks = reader[idx].ElementBlocks.Available
 
-reader[-1].ElementVariables = reader[-1].ElementVariables.Available
+reader[1].ElementVariables = [a for a in reader[idx].ElementVariables.Available if ( ( not a.startswith('ProcRate')) and ( not a.startswith('PowerDep')) ) ]
 
 temporalShift = []
 tMax = [];
 tMin = []
+fullTime = []
 
 for idx, r in enumerate(reader):
     temporalShift.append(TemporalShiftScale(Input=r))
     temporalShift[idx].PreShift = -r.TimestepValues[0]
     tMin.append(min(r.TimestepValues))
     tMax.append(max(r.TimestepValues))
+    fullTime.append(r.TimestepValues)
 
 period = abs(tMin[0] - tMin[1])
 EndTime = max(tMax)
 nCycles = EndTime / period
+fullTime = sorted(fullTime[0])
+maxDT = round(max([j-i for i, j in zip(fullTime[:-1], fullTime[1:])]), 10)
 
-squareVar = ProgrammableFilter(Input=temporalShift)
+temporalInterpolate = []
+
+for idx, r in enumerate(temporalShift):
+    temporalInterpolate.append(TemporalInterpolator(Input=r))
+    temporalInterpolate[idx].DiscreteTimeStepInterval = maxDT
+
+squareVar = ProgrammableFilter(Input=temporalInterpolate)
 script = "output.CellData.append(inputs[-1].CellData['x'], 'x')\n"
 
 for var in reader[0].ElementVariables:
@@ -62,7 +71,7 @@ for var in reader[0].ElementVariables:
 squareVar.Script=script
 squareVar.UpdatePipeline()
 
-squareDiff = ProgrammableFilter(Input=temporalShift)
+squareDiff = ProgrammableFilter(Input=temporalInterpolate)
 script = "output.CellData.append(inputs[-1].CellData['x'], 'x')\n"
 
 for var in reader[0].ElementVariables:
@@ -81,12 +90,12 @@ RelNorm.Script = """
 from numpy import trapz
 for t0, t1, outTable in zip(inputs[0], inputs[1], output):
     for aname in t0.RowData.keys():
-        outTable.RowData.append(trapz(t0.RowData[aname]/t1.RowData[aname], x=t0.RowData['Time']), aname)
+        outTable.RowData.append(trapz(t0.RowData[aname], x=t0.RowData['Time'])/trapz(t1.RowData[aname], x=t1.RowData['Time']), aname)
 """
 
 RelNorm.UpdatePipeline()
 
-RelNormTrans = TransposeTable(Input=RelNorm, VariablesofInterest=[a for a in reader[0].ElementVariables if not a.startswith('ProcRate')])
+RelNormTrans = TransposeTable(Input=RelNorm, VariablesofInterest=[a for a in reader[0].ElementVariables ])
 TotalRelNorm = ProgrammableFilter(Input=RelNormTrans)
 TotalRelNorm.Script = """
 from numpy import sum
@@ -96,6 +105,10 @@ for t0, outTable in zip(inputs[0], output):
 
 TotalRelNorm.UpdatePipeline()
 
+fname = glob.glob(path + 'TotalRelNorm*.csv')
+for f in fname:
+  os.remove(f)
+
 writer = CreateWriter(path + 'TotalRelNorm.csv', TotalRelNorm, Precision=12, UseScientificNotation=1)
 writer.UpdatePipeline()
 
@@ -103,7 +116,10 @@ for f in GetSources().values():
     Delete(f)
     del f
 
-with open(path + 'TotalRelNorm0.csv', 'rb') as csvfile:
+fname = glob.glob(path + 'TotalRelNorm*.csv')
+os.rename(fname[0] , path + 'TotalRelNorm.csv')
+
+with open(path + 'TotalRelNorm.csv', 'rb') as csvfile:
     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
     row = next(reader)
     row = next(reader)
@@ -118,7 +134,5 @@ with open(path + 'TotalRelNorm.csv', 'wb') as csvfile:
 with open(path + 'sum.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(row)
-	
-os.remove(path + 'TotalRelNorm0.csv')
 
 print(', '.join(map(str, [nCycles] + row)))

@@ -17,6 +17,8 @@ validParams<SchottkyEmissionPostProcessor>()
   params.addRequiredParam<std::string>("potential_units", "The potential units.");
   params.addRequiredParam<bool>("use_moles",
                                 "Whether to use units of moles as opposed to # of molecules.");
+	params.addRequiredParam<bool>("include_SE",
+                                "Whether to include the effect of secondary emission in calculation.");
 
   return params;
 }
@@ -25,6 +27,7 @@ SchottkyEmissionPostProcessor::SchottkyEmissionPostProcessor(const InputParamete
   : SideIntegralVariablePostprocessor(params),
 
     _use_moles(getParam<bool>("use_moles")),
+		_include_SE(getParam<bool>("include_SE")),
     _r_units(1. / getParam<Real>("position_units")),
     _t_units(1. / getParam<Real>("time_units")),
 		_potential_units(getParam<std::string>("potential_units")),
@@ -96,5 +99,5 @@ SchottkyEmissionPostProcessor::emission_current()
                    (kB * _cathode_temperature[_qp] + std::numeric_limits<double>::epsilon()));
   _j_SE = _e[_qp] * _se_coeff[_qp] * _ion_flux * _normals[_qp];
 
-  return (_t_units / _r_units) * (_j_TE + _j_SE) ;
+  return (_t_units / _r_units) * (_j_TE + ( _include_SE ? _j_SE : 0.0 ) ) ;
 }

@@ -41,7 +41,6 @@ r_Arp_anode = 0
 #	 potential_units = V
 	use_moles = true
 #	use_moles = false
-  em = em
 []
 
 [Mesh]
@@ -86,10 +85,10 @@ r_Arp_anode = 0
 #	petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
 #	petsc_options_value = 'asm lu'
 
-	nl_rel_tol = 1E-10
-	nl_abs_tol = 1E-10
+	nl_rel_tol = 0.1E-3
+	nl_abs_tol = 0.1E-14
 
-	dtmin = ${/ 1E-14 ${time_units}}
+	dtmin = ${/ 1E-16 ${time_units}}
 	dtmax = ${/ ${onTime} 50 }
 	nl_max_its = 40
 	[./TimeStepper]
@@ -147,7 +146,19 @@ r_Arp_anode = 0
 		variable = em
 		potential = potential
 		ip = Arp
+		include_SE = true
 	[../]
+	
+	[./Thermionic_EmissionCurrent]
+		type = SchottkyEmissionPostProcessor
+		boundary = left
+		#r = 1
+		variable = em
+		potential = potential
+		ip = Arp
+		include_SE = false
+	[../]
+	
 	[./Native_EmissionCurrent]
 		type = SchottkyEmissionPostProcessor
 		boundary = left
@@ -155,6 +166,7 @@ r_Arp_anode = 0
 		variable = em
 		potential = native_potential
 		ip = Arp
+		include_SE = false
 	[../]
 []
 
@@ -233,7 +245,7 @@ r_Arp_anode = 0
 	[./em_ionization]
 		type = ElectronsFromIonization
 		variable = em
-		#em = em
+		em = em
 		potential = potential
 		mean_en = mean_en
 		block = 0
@@ -716,6 +728,7 @@ r_Arp_anode = 0
 #		type = SchottkyEmissionBC
 #		type = SecondaryElectronBC
 		variable = em
+		em = em
 		boundary = left
 		potential = potential
 		mean_en = mean_en
@@ -863,14 +876,14 @@ r_Arp_anode = 0
 		potential = potential
 		ip = Arp
 		mean_en = mean_en
-		user_se_coeff = 0.02
+		user_se_coeff = 2.3E-4
 		user_work_function = ${cathode_work_function} # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
 		user_cathode_temperature = ${cathode_temperature} # K
 		property_tables_file = td_argon_mean_en.tsv
 		block = 0
-		user_T_gas = 500
+		user_T_gas = 617.98
 	[../]
 	
 	[./xenon_gas_block]
@@ -883,14 +896,14 @@ r_Arp_anode = 0
 		potential = potential
 		ip = Arp
 		mean_en = mean_en
-		user_se_coeff = 0.02
+		user_se_coeff = 2.3E-4
 		user_work_function = ${cathode_work_function} # eV
 		user_field_enhancement = 55
 		user_Richardson_coefficient = 80E4
 		user_cathode_temperature = ${cathode_temperature} # K
 		property_tables_file = td_xenon_mean_en.tsv
 		block = 0
-		user_T_gas = 500
+		user_T_gas = 617.98
 	[../]
 
 	[./electricConstant]

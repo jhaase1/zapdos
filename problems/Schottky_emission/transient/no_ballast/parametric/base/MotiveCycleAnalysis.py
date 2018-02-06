@@ -79,20 +79,140 @@ electrodeData.append(selectElectrodeData(anodeValues, VariablesofInterest))
 PowerAndEfficiency = ProgrammableFilter(Input=electrodeData)
 PowerAndEfficiency.Script = """
 from numpy import trapz
-for c, a, outTable in zip(inputs[0], inputs[1], output):
-  time = c.RowData['Time']
-  period = max(time) - min(time)
-  
-  j = a.RowData['tot_gas_current']
-  jV = j * ( c.RowData['Voltage'] - a.RowData['Voltage'] )
-  EmitEnergy = c.RowData['Emission_energy_flux']
-  
-  outTable.RowData.append(trapz(j, x=time) / period, 'j')
-  outTable.RowData.append(trapz(j**2, x=time) / period, 'j2')
-  
-  outTable.RowData.append(trapz(EmitEnergy, x=time) / period, 'emit_energy')
+import numpy as np
 
-  outTable.RowData.append(trapz(jV, x=time) / period, 'jV')
+for c, a, outTable in zip(inputs[0], inputs[1], output):
+  voltageDelta = 1E-1 # (V)
+  timeUnits = 1E-9 # (s/ns)
+  
+  potential = np.round(c.RowData['Voltage'] - a.RowData['Voltage'],4) # (V)
+  
+  loadVoltage = np.round(max( potential ) * np.ones(len(c.RowData['Voltage'])) , 4) # (V)
+  workFunctionDelta = 1
+  workFunctionDeltaVector = workFunctionDelta * np.ones(len(c.RowData['Voltage'])) # (eV)
+  appliedVoltage = np.round( potential - loadVoltage , 4 ) # (V)
+  
+  ind = np.where( max( potential ) - voltageDelta < np.array(potential)) # (V)
+  
+  time = c.RowData['Time'] - min(c.RowData['Time']) # (ns)
+  period = max(time) - min(time) # (ns)
+  offTime = max(time[ind]) - min(time[ind]) # (ns)
+  onTime = period - offTime # (ns)
+  
+  # current density
+  j = a.RowData['tot_gas_current']
+  
+  PNet = j * (workFunctionDeltaVector + potential)
+  PCons = j * appliedVoltage
+  PProd = j * (workFunctionDeltaVector + loadVoltage)
+  
+  # The units stay the same because it is being integrated over ns, then divided by ns
+  
+  # Output voltage (V)
+  outTable.RowData.append(np.round( workFunctionDelta + max( potential ) , 4 ), 'VOut')
+  
+  # Average current density (A/m^2)
+  outTable.RowData.append(trapz(j, x=time) / period, 'CurrentDensity')
+  
+  # Net power (W/m^2)
+  outTable.RowData.append(trapz(PNet, x=time) / period, 'NetPower')
+  
+  # Power produced (W/m^2)
+  outTable.RowData.append(trapz(PProd, x=time) / period, 'PowerProduced')
+  
+  # Power consumed (W/m^2)
+  outTable.RowData.append(trapz(PCons, x=time) / onTime, 'PowerConsumed')
+  
+  # Net energy (W/m^2)
+  outTable.RowData.append(trapz(PNet, x=time) * timeUnits, 'NetEnergy')
+  
+  # Energy produced (W/m^2)
+  outTable.RowData.append(trapz(PProd, x=time) * timeUnits, 'EnergyProduced')
+  
+  # Energy consumed (W/m^2)
+  outTable.RowData.append(trapz(PCons, x=time) * timeUnits, 'EnergyConsumed')
+  
+  # Abs Net energy (W/m^2)
+  outTable.RowData.append(trapz(abs(PNet), x=time) * timeUnits, 'AbsNetEnergy')
+  
+  # Abs Energy produced (W/m^2)
+  outTable.RowData.append(trapz(abs(PProd), x=time) * timeUnits, 'AbsEnergyProduced')
+  
+  # Abs Energy consumed (W/m^2)
+  outTable.RowData.append(trapz(abs(PCons), x=time) * timeUnits, 'AbsEnergyConsumed')
+  
+  # ElectronCooling (W/m^2)
+  outTable.RowData.append(trapz(c.RowData['Emission_energy_flux'], x=time) / period, 'ElectronCooling')
+  
+#Individual net energy segments (W/m^2)
+  zcNet = np.unique(np.append(np.append([0],np.where(np.diff(np.sign(PNet)))[0]), [len(time)-1]))
+  
+  NetEnergySegments = []
+  for idx, (lowerBound, upperBound) in enumerate(zip(zcNet[0:-1], zcNet[1:])):
+    NetEnergySegments.append(trapz(PNet[lowerBound:upperBound], x=time[lowerBound:upperBound]) * timeUnits)
+  
+  ind = []
+  seg = []
+  
+  for a, b in zip(zcNet[0:-1], NetEnergySegments):
+    if abs(b) > 1E-15:
+      ind.append(a)
+      seg.append(b)
+  
+  zcNet = ind
+  NetEnergySegments = seg
+    
+#Individual consumed energy segments (W/m^2)
+  zcCons = np.unique(np.append(np.append([0],np.where(np.diff(np.sign(PCons)))[0]), [len(time)-1]))
+
+  ConsEnergySegments = []
+  for idx, (lowerBound, upperBound) in enumerate(zip(zcCons[0:-1], zcCons[1:])):
+    ConsEnergySegments.append(trapz(PCons[lowerBound:upperBound], x=time[lowerBound:upperBound]) * timeUnits)
+  
+  ind = []
+  seg = []
+  
+  for a, b in zip(zcCons[0:-1], ConsEnergySegments):
+    if abs(b) > 1E-15:
+      ind.append(a)
+      seg.append(b)
+  
+  zcCons = ind
+  ConsEnergySegments = seg
+	
+#Individual produced energy segments (W/m^2)
+  zcProd = np.unique(np.append(np.append([0],np.where(np.diff(np.sign(PProd)))[0]), [len(time)-1]))
+  
+  ProdEnergySegments = []
+  for idx, (lowerBound, upperBound) in enumerate(zip(zcProd[0:-1], zcProd[1:])):
+    ProdEnergySegments.append(trapz(PProd[lowerBound:upperBound], x=time[lowerBound:upperBound]) * timeUnits)
+  
+  ind = []
+  seg = []
+  
+  for a, b in zip(zcProd[0:-1], ProdEnergySegments):
+    if abs(b) > 1E-15:
+      ind.append(a)
+      seg.append(b)
+  
+  zcProd = ind
+  ProdEnergySegments = seg
+
+  outTable.RowData.append(len(zcNet), 'NetCrossings')
+  outTable.RowData.append(len(zcCons), 'ConsumedCrossings')
+  outTable.RowData.append(len(zcProd), 'ProducedCrossings')
+  
+  for idx, (ind, seg) in enumerate(zip(zcNet, NetEnergySegments)):
+    outTable.RowData.append(time[ind] - min(time), 'NetEnergyCrossTime' + str(idx))
+    outTable.RowData.append(seg, 'NetEnergySegment' + str(idx))
+  
+  for idx, (ind, seg) in enumerate(zip(zcCons, ConsEnergySegments)):
+    outTable.RowData.append(time[ind] - min(time), 'ConsEnergyCrossTime' + str(idx))
+    outTable.RowData.append(seg, 'ConsumedEnergySegment' + str(idx))
+  
+  for idx, (ind, seg) in enumerate(zip(zcProd, ProdEnergySegments)):
+    outTable.RowData.append(time[ind] - min(time), 'ProdEnergyCrossTime' + str(idx))
+    outTable.RowData.append(seg, 'ProducedEnergySegment' + str(idx))
 """
 
 PowerAndEfficiency.UpdatePipeline()

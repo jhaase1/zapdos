@@ -23,6 +23,7 @@ protected:
 	Real emission_current();
 
 	Real _use_moles;
+	Real _include_SE;
 	Real _r_units;
 	Real _t_units;
 	std::string _potential_units;

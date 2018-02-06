@@ -75,80 +75,83 @@ anodeValues.Mode = 'Interpolate At Location'
 
 electrodeData.append(selectElectrodeData(anodeValues, VariablesofInterest))
 
+electrodeData.append(reader)
+
 ## Calculate average powers and efficiency ##
 PowerAndEfficiency = ProgrammableFilter(Input=electrodeData)
 PowerAndEfficiency.Script = """
 from numpy import trapz
-for c, a, outTable in zip(inputs[0], inputs[1], output):
-  time = c.RowData['Time']
-  period = max(time) - min(time)
+import numpy as np
+for c, a, r, outTable in zip(inputs[0], inputs[1], inputs[2], output):
+  voltageDelta = 1E-1 # (V)
+  timeUnits = 1E-9 # (s/ns)
   
-  j = a.RowData['tot_gas_current']
-  jV = j * ( c.RowData['Voltage'] - a.RowData['Voltage'] )
-  EmitEnergy = c.RowData['Emission_energy_flux']
+  potential = c.RowData['Voltage'] - a.RowData['Voltage'] # (V)
   
-  outTable.RowData.append(trapz(j, x=time) / period, 'j')
-  outTable.RowData.append(trapz(j**2, x=time) / period, 'j2')
+  loadVoltage = max( potential ) * np.ones(len(c.RowData['Voltage'])) # (V)
+  workFunctionDelta = 1
+  workFunctionDeltaVector = workFunctionDelta * np.ones(len(c.RowData['Voltage'])) # (eV)
+  appliedVoltage = numpy.round( potential - loadVoltage , 4 ) # (V)
   
-  outTable.RowData.append(trapz(EmitEnergy, x=time) / period, 'emit_energy')
-
-  outTable.RowData.append(trapz(jV, x=time) / period, 'jV')
+  ind = np.where( max( potential ) - voltageDelta < np.array(potential)) # (V)
+  
+  time = c.RowData['Time'] - min(c.RowData['Time']) # (ns)
+  period = max(time) - min(time) # (ns)
+  offTime = max(time[ind]) - min(time[ind]) # (ns)
+  onTime = period - offTime # (ns)  
+  
+  # current density
+  j = a.RowData['tot_gas_current'] 
+  
+  # The units stay the same because it is being integrated over ns, then divided by ns
+  
+  # Time (ns)
+  outTable.RowData.append(time, 'time')
+  
+  # Total current density leaving at the boundaries (A/m^2)
+  outTable.RowData.append(j, 'CurrentDensity')
+  
+  # Cathode anode potential difference (V)
+  outTable.RowData.append(potential, 'CathodeAnodePotentialDifference')
+  
+  # Output voltage (V)
+  outTable.RowData.append(workFunctionDeltaVector + potential, 'OutputVoltage')
+  
+  # Production voltage (V)
+  outTable.RowData.append(workFunctionDeltaVector + loadVoltage, 'ProductionVoltage')
+  
+  # Applied voltage (V)
+  outTable.RowData.append(appliedVoltage, 'AppliedVoltage')
+  
+  # Net power (W/m^2)
+  outTable.RowData.append(j * (workFunctionDeltaVector + potential), 'NetPower')
+  
+  # Power produced (W/m^2)
+  outTable.RowData.append(j * (workFunctionDeltaVector + loadVoltage), 'PowerProduced')
+  
+  # Power power consumed (W/m^2)
+  outTable.RowData.append(j * appliedVoltage, 'PowerConsumed')
+   
+  # ElectronCooling (W/m^2)
+  outTable.RowData.append(c.RowData['Emission_energy_flux'], 'ElectronCooling')
+  
+  # Total current density leaving at the boundaries (A/m^2)
+  outTable.RowData.append(r.FieldData['Full_EmissionCurrent'], 'EmittedCurrentDensity') # Emitted current density (A/m^2)
+  outTable.RowData.append(r.FieldData['Thermionic_EmissionCurrent'], 'ThermionicEmissionCurrent') # Thermionic emitted current density (A/m^2)
+  outTable.RowData.append(r.FieldData['Native_EmissionCurrent'], 'NativeCurrentDensity') # Native emitted current density (A/m^2)
 """
 
 PowerAndEfficiency.UpdatePipeline()
 
-fname = glob.glob(path + 'PowerAndEfficiency*.csv')
+fname = glob.glob(path + 'TimeDependentData*.csv')
 for f in fname:
   os.remove(f)
 
-writer = CreateWriter(path + 'PowerAndEfficiency.csv', PowerAndEfficiency, Precision=12, UseScientificNotation=1)
+writer = CreateWriter(path + 'TimeDependentData.csv', PowerAndEfficiency, Precision=13, UseScientificNotation=1)
 writer.UpdatePipeline()
 
-fname = glob.glob(path + 'FieldData*.csv')
-for f in fname:
-  os.remove(f)
-
-writer = CreateWriter(path + 'FieldData.csv', reader, Precision=12, UseScientificNotation=1, FieldAssociation='Field Data')
-writer.UpdatePipeline()
-
-fname = glob.glob(path + 'FieldData*.csv')
-FieldData = numpy.genfromtxt(fname[0], delimiter=',').transpose()
-for f in fname:
-  os.remove(f)
-
-time = reader.TimestepValues
-
-FullEmission = numpy.delete(FieldData[0], 0)
-NativeEmission = numpy.delete(FieldData[1], 0)
-relTime = [t - min(time) for t in time]
-
-zipped = zip(relTime, FullEmission, NativeEmission)
-numpy.savetxt(path + 'data.csv', zipped, delimiter = ',')
-
-
-EmissionBenefit = numpy.trapz( FullEmission / NativeEmission , x=time) / (max(time) - min(time))
-cycles = max(time) / (max(time) - min(time))
-
-fname = glob.glob(path + 'PowerAndEfficiency*.csv')
-os.rename(fname[0] , path + 'PowerAndEfficiency.csv')
-
-with open(path + 'PowerAndEfficiency.csv', 'rb') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    header = next(reader)
-    data = next(reader)
-
-header = [h.replace('"','') for h in header]
-header.extend(['emission_increase', 'cycles'])
-data.extend([str(EmissionBenefit), str(int(max(time)/(max(time)-min(time))))])
-
-with open(path + 'PowerAndEfficiency.csv', 'wb') as csvfile:
-  writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-  writer.writerow(header)
-  writer.writerow(data)
-
-with open(path + 'emission_increase.csv', 'wb') as csvfile:
-  writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
-  writer.writerow([EmissionBenefit])
+fname = glob.glob(path + 'TimeDependentData*.csv')
+os.rename(fname[0] , path + 'TimeDependentData.csv')
 
 for f in GetSources().values():
     Delete(f)

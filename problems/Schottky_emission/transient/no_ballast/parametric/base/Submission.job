@@ -8,20 +8,34 @@
 
 # Initialize variables
 restart=true
-transientCycles=5
-initalCycles=2
-limit="5E-5"
+transientCycles=1
 
-if [ -f TotalRelNorm.csv ] && [ "$restart" == "true" ]; then
+limit="5E-5"
+#currentAbsError="1E-8"
+#maxAbsError="1E-11"
+
+echo "${maxAbsError}" > maxAbsError.csv
+
+cmd="mpirun -np 8 ~/zapdos/zapdos-opt -i"
+SmallOutput="Outputs/out/execute_on='final'"
+options=""
+#AbsErrorStatement="Executioner/nl_abs_tol = ${currentAbsError}"
+####options="gap=2E-6 Materials/gas_block/user_work_function=4.00"
+post=""
+
+
+if [[ -f TotalRelNorm.csv ]] && [[ "$restart" == "true" ]]; then
 	printf -v cCycles %.0f "$( cat TotalRelNorm.csv | cut -d, -f1 )";
 	
-	if ! [ -f SteadyState_out.e ]; then
+	if ! [[ -f SteadyState_out.e ]] || ! [[ -d SteadyState_checkpoint_cp ]] ; then
 		for f in `ls PreviousCycle* -d | grep -v '\.i'` ; do 
 			mv $f $(echo "$f" | sed 's/PreviousCycle/SteadyState/g') ;
 		done
 		
 		mv PreviousCycle.log CurrentCycle.log
 	fi
+	
+	transientCycles=1;
 	
 else
 	cCycles=0;
@@ -34,12 +48,6 @@ limit=`echo ${limit} | sed -e 's/[eE]+*/\*10\^/'`
 
 norm2=1000
 echo "${norm2}" > sum.csv
-
-cmd="mpirun -np 8 ~/zapdos/zapdos-opt -i"
-SmallOutput="Outputs/out/execute_on='final'"
-options=""
-####options="gap=2E-6 Materials/gas_block/user_work_function=4.00"
-post=""
 
 # Specific instructions if running as submitted job
 if [[ ! -z "$SGE_STDOUT_PATH" ]]
@@ -54,29 +62,29 @@ then
 fi
 
 # Loop until converged
-while [ `echo $norm2'<'$limit | bc -l` -eq 0 ]; do
+while [[ `echo $norm2'<'$limit | bc -l` -eq 0 ]]; do
 	#Run initial cycle
 	dos2unix transientCycles.csv
 	dCycles=`cat transientCycles.csv | sed -e 's/[eE]+*/\*10\^/'`
 	
-	if [ ${cCycles} -eq 0 ]
+	if [[ ${cCycles} -eq 0 ]]
 	then
 		failed=true
 		for ic in `seq -35 5 0` ; do
 			icStatement="Variables/em/initial_condition=${ic} Variables/Arp/initial_condition=${ic} Variables/mean_en/initial_condition=${ic}"
 			
-			eval "${cmd} Initial.i completedCycles=${cCycles} desiredCycles=${initalCycles} ${options} ${icStatement} ${post}" 2> Error.txt
+			eval "${cmd} Initial.i completedCycles=${cCycles} desiredCycles=${dCycles} ${options} ${icStatement} ${post}" 2> Error.txt
 			
 			ErrorMgsLength=$(wc -c < Error.txt)
 			
-			if [ $ErrorMgsLength -eq 0 ]
+			if [[ $ErrorMgsLength -eq 0 ]]
 			then
 				failed=false
 				break
 			fi
 		done
 		
-		if [ $failed = true ]
+		if [[ $failed = true ]]
 		then
 			exit 56 ;
 		fi
@@ -138,6 +146,19 @@ while [ `echo $norm2'<'$limit | bc -l` -eq 0 ]; do
 		
 		dos2unix limit.csv
 		limit=`cat limit.csv | sed -e 's/[eE]+*/\*10\^/'`
+		maxAbsError=`cat maxAbsError.csv | sed -e 's/[e]+*/E/'`
+		maxAbsErrorStatement="Executioner/nl_abs_tol = ${maxAbsError}"
+		
+#		## Tighten error
+#		if [[ `echo $norm2'>'$limit | bc -l` -eq 0 ]] && [[ "${AbsErrorStatement}" != "${maxAbsErrorStatement}" ]] ; then
+#			norm2=1000
+#			
+#			transientCycles=1
+#			echo "${transientCycles}" > transientCycles.csv
+#			
+#			currentAbsError="$(printf "%0.0e" $(echo "${currentAbsError}/10" | sed -e 's/[eE]+*/\*10\^/' | bc -l) | sed -e 's/[e]+*/E/')"
+#			AbsErrorStatement="Executioner/nl_abs_tol = ${currentAbsError}"
+#		fi
 done
 
 # Create summary until not getting inf from emission increase...
@@ -164,9 +185,15 @@ while ! [[ $emissionIncrease =~ $re ]] ; do
 	fi
 done
 
+pvpython UnAveragedSystemData.py
+
 # Create backup folder if it does not exist
 if [ ! -d ../backup ]; then
 	mkdir -p ../backup ;
+fi
+
+if [ ! -d ../TimeDependentData ]; then
+	mkdir -p ../TimeDependentData ;
 fi
 
 # Create results folder if it does not exist
@@ -179,6 +206,9 @@ cwd=$(basename `pwd`)
 
 # Move summarized data to results folder
 cp PowerAndEfficiency.csv "../results/${cwd}.csv"
+
+# Move summarized data to results folder
+cp TimeDependentData.csv "../TimeDependentData/${cwd}.csv"
 
 # Remove extraneous files
 rm sum.csv
@@ -193,7 +223,7 @@ for f in `ls SteadyState* -d | grep -v '\.i'` ; do
 done
 
 dCycles=1
-eval "${cmd} SteadyState.i completedCycles=${cCycles} desiredCycles=${dCycles} Outputs/out/execute_on='final' ${options} ${post}"
+eval "${cmd} SteadyState.i completedCycles=${cCycles} desiredCycles=${dCycles} ${SmallOutput} ${options} ${post}"
 cCycles=$((cCycles+dCycles))
 
 # Move backup file to backup directory
@@ -205,7 +235,7 @@ for f in `ls TotalRelNorm*.csv -d` ; do
 		cp $f "../backup/${cwd}.csv" ;
 done
 
-# Rename state
-for f in `ls PreviousCycle* -d | grep -v '\.i'` ; do 
-	mv $f $(echo "$f" | sed 's/PreviousCycle/SteadyState/g') ;
-done
+## Rename state
+#for f in `ls PreviousCycle* -d | grep -v '\.i'` ; do 
+#	mv $f $(echo "$f" | sed 's/PreviousCycle/SteadyState/g') ;
+#done
